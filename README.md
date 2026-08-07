@@ -37,5 +37,5 @@ npm run tauri build
 
 ## Current Status
 
-Phase 0 (project initialization) complete. The editor starts with a minimal Tauri + Milkdown (Crepe) setup.
-File open/save, the LyX-style toolbar, clipboard integration, math input, and PlantUML integration are not yet implemented (see `03_plan.md` for the implementation plan).
+Phase 0-1 complete: a minimal Tauri + Milkdown (Crepe) editor with a native File menu (Open / Save / Save As).
+The LyX-style in-app toolbar, clipboard integration, math input, and PlantUML integration are not yet implemented (see `03_plan.md` for the implementation plan).
