@@ -1,0 +1,15 @@
+# Project management docs (not tracked per CLAUDE.md)
+/01_requirements.md
+/02_design.md
+/03_plan.md
+/CLAUDE.md
+
+# Node
+node_modules/
+dist/
+
+# Rust / Tauri
+src-tauri/target/
+
+# OS
+.DS_Store
