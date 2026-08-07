@@ -1,41 +1,41 @@
 # MDyX
 
-LyX風 WYSIWYG Markdownエディタ。
+A LyX-style WYSIWYG Markdown editor.
 
-詳細な要求仕様・設計は非公開のプロジェクト管理ドキュメント(`01_requirements.md` / `02_design.md` / `03_plan.md`、いずれもGit管理対象外)を参照。
+Detailed requirements and design live in private project docs (`01_requirements.md` / `02_design.md` / `03_plan.md`, all excluded from Git).
 
-## 技術スタック
+## Tech Stack
 
-| 領域 | 採用技術 |
+| Area | Technology |
 |---|---|
-| デスクトップシェル | [Tauri](https://tauri.app/) |
-| エディタコア | [Milkdown](https://milkdown.dev/)(ProseMirror + remark)+ [Crepe](https://milkdown.dev/docs/guide/using-crepe) |
-| 数式入力 | MathLive(ノードビューとして統合予定) |
-| クリップボード | tauri-plugin-clipboard(予定) |
-| 保存フォーマット | 素のMarkdown |
+| Desktop shell | [Tauri](https://tauri.app/) |
+| Editor core | [Milkdown](https://milkdown.dev/) (ProseMirror + remark) + [Crepe](https://milkdown.dev/docs/guide/using-crepe) |
+| Math input | MathLive (planned, integrated as a node view) |
+| Clipboard | tauri-plugin-clipboard (planned) |
+| Save format | Plain Markdown |
 
-## セットアップ
+## Setup
 
-前提: Node.js, npm, Rust(cargo)がインストール済みであること。
+Prerequisites: Node.js, npm, and Rust (cargo) must be installed.
 
 ```bash
 npm install
 ```
 
-## 開発
+## Development
 
 ```bash
 npm run tauri dev
 ```
 
-## ビルド
+## Build
 
 ```bash
 npm run build
 npm run tauri build
 ```
 
-## 現在の状況
+## Current Status
 
-Phase 0(プロジェクト初期化)完了。Tauri + Milkdown(Crepe)の最小構成でエディタが起動する状態。
-ファイルの開く/保存、LyX風ツールバー、クリップボード連携、数式、PlantUML連携は未実装(実装計画は`03_plan.md`を参照)。
+Phase 0 (project initialization) complete. The editor starts with a minimal Tauri + Milkdown (Crepe) setup.
+File open/save, the LyX-style toolbar, clipboard integration, math input, and PlantUML integration are not yet implemented (see `03_plan.md` for the implementation plan).
