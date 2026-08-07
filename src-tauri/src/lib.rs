@@ -28,7 +28,24 @@ pub fn run() {
                 .item(&save_item)
                 .item(&save_as_item)
                 .build()?;
-            let menu = MenuBuilder::new(app).item(&file_menu).build()?;
+
+            let undo_item = MenuItemBuilder::with_id("edit-undo", "Undo").build(app)?;
+            let redo_item = MenuItemBuilder::with_id("edit-redo", "Redo").build(app)?;
+            let edit_menu = SubmenuBuilder::new(app, "Edit")
+                .item(&undo_item)
+                .item(&redo_item)
+                .build()?;
+
+            let insert_table_item = MenuItemBuilder::with_id("insert-table", "Table").build(app)?;
+            let insert_menu = SubmenuBuilder::new(app, "Insert")
+                .item(&insert_table_item)
+                .build()?;
+
+            let menu = MenuBuilder::new(app)
+                .item(&file_menu)
+                .item(&edit_menu)
+                .item(&insert_menu)
+                .build()?;
             app.set_menu(menu)?;
 
             app.on_menu_event(move |app, event| {
@@ -39,6 +56,9 @@ pub fn run() {
                     "file-open" => Some("menu-file-open"),
                     "file-save" => Some("menu-file-save"),
                     "file-save-as" => Some("menu-file-save-as"),
+                    "edit-undo" => Some("menu-edit-undo"),
+                    "edit-redo" => Some("menu-edit-redo"),
+                    "insert-table" => Some("menu-insert-table"),
                     _ => None,
                 };
                 if let Some(event_name) = event_name {

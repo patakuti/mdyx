@@ -16,9 +16,81 @@ body {
   height: 100%;
 }
 
+#toolbar-root {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 8px;
+  background-color: #e8e8e8;
+  border-bottom: 1px solid #cccccc;
+}
+
+.toolbar-separator {
+  width: 1px;
+  align-self: stretch;
+  margin: 2px 6px;
+  background-color: #cccccc;
+}
+
+.toolbar-button {
+  min-width: 28px;
+  padding: 4px 6px;
+  font-size: 14px;
+  line-height: 1;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.toolbar-button:hover {
+  border-color: #999999;
+  background-color: #ffffff;
+}
+
+.tb-bold {
+  font-weight: 700;
+}
+
+.tb-italic {
+  font-style: italic;
+}
+
+.tb-strike {
+  text-decoration: line-through;
+}
+
+.tb-mono {
+  font-family: monospace;
+}
+
 #editor-root {
-  height: 100vh;
+  height: calc(100vh - 40px);
   overflow-y: auto;
+}
+
+@media (prefers-color-scheme: dark) {
+  #toolbar-root {
+    background-color: #262626;
+    border-bottom-color: #444444;
+  }
+
+  .toolbar-button {
+    color: #f6f6f6;
+  }
+
+  .toolbar-button:hover {
+    border-color: #666666;
+    background-color: #3a3a3a;
+  }
+
+  .toolbar-separator {
+    background-color: #444444;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
