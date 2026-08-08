@@ -99,3 +99,29 @@ body {
     background-color: #2f2f2f;
   }
 }
+
+.toast-container {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toast {
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.toast-error {
+  background-color: #c0392b;
+}
+
+.toast-warning {
+  background-color: #b8860b;
+}

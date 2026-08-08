@@ -11,7 +11,7 @@ Detailed requirements and design live in private project docs (`01_requirements.
 | Desktop shell | [Tauri](https://tauri.app/) |
 | Editor core | [Milkdown](https://milkdown.dev/) (ProseMirror + remark) + [Crepe](https://milkdown.dev/docs/guide/using-crepe) |
 | Math input | MathLive (planned, integrated as a node view) |
-| Clipboard | tauri-plugin-clipboard (planned) |
+| Clipboard | tauri-plugin-clipboard-manager (image paths); Milkdown's built-in clipboard handling (tables/text) |
 | Save format | Plain Markdown |
 
 ## Setup
@@ -37,5 +37,5 @@ npm run tauri build
 
 ## Current Status
 
-Phase 0-2 complete: a Tauri + Milkdown (Crepe) editor with a native File/Edit/Insert menu (Open / Save / Save As, Undo / Redo, Insert Table) and an always-visible in-app formatting toolbar (Bold, Italic, Strikethrough, Inline Code, Headings, Lists, Blockquote, Code Block, Horizontal Rule, Table).
-Clipboard integration, math input, and PlantUML integration are not yet implemented (see `03_plan.md` for the implementation plan).
+Phase 0-4 complete: a Tauri + Milkdown (Crepe) editor with a native File/Edit/Insert menu (Open / Save / Save As, Undo / Redo, Insert Table / Image), an always-visible in-app formatting toolbar, table copy/paste (via Milkdown's built-in clipboard + GFM support), and image path copy/paste (selecting an image node and copying writes its absolute path as text; pasting a valid image file path replaces/inserts the image, with relative-path resolution against the document's folder).
+Math input and PlantUML integration are not yet implemented (see `03_plan.md` for the implementation plan).
