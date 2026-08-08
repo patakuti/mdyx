@@ -17,6 +17,11 @@ pub fn run() {
             commands::clipboard::read_clipboard_for_image,
             commands::clipboard::copy_image_path,
             commands::clipboard::resolve_image_display_path,
+            commands::clipboard::write_clipboard_text,
+            commands::clipboard::read_clipboard_text,
+            commands::plantuml::render_plantuml,
+            commands::config::get_config,
+            commands::config::save_config,
         ])
         .setup(|app| {
             let open_item = MenuItemBuilder::with_id("file-open", "Open...")
@@ -45,15 +50,26 @@ pub fn run() {
             let insert_image_item =
                 MenuItemBuilder::with_id("insert-image", "Image (from clipboard path)")
                     .build(app)?;
+            let insert_plantuml_item =
+                MenuItemBuilder::with_id("insert-plantuml", "PlantUML Diagram").build(app)?;
             let insert_menu = SubmenuBuilder::new(app, "Insert")
                 .item(&insert_table_item)
                 .item(&insert_image_item)
+                .item(&insert_plantuml_item)
+                .build()?;
+
+            let settings_plantuml_server_item =
+                MenuItemBuilder::with_id("settings-plantuml-server", "PlantUML Server...")
+                    .build(app)?;
+            let settings_menu = SubmenuBuilder::new(app, "Settings")
+                .item(&settings_plantuml_server_item)
                 .build()?;
 
             let menu = MenuBuilder::new(app)
                 .item(&file_menu)
                 .item(&edit_menu)
                 .item(&insert_menu)
+                .item(&settings_menu)
                 .build()?;
             app.set_menu(menu)?;
 
@@ -69,6 +85,8 @@ pub fn run() {
                     "edit-redo" => Some("menu-edit-redo"),
                     "insert-table" => Some("menu-insert-table"),
                     "insert-image" => Some("menu-insert-image"),
+                    "insert-plantuml" => Some("menu-insert-plantuml"),
+                    "settings-plantuml-server" => Some("menu-settings-plantuml-server"),
                     _ => None,
                 };
                 if let Some(event_name) = event_name {

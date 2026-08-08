@@ -77,3 +77,20 @@ pub fn copy_image_path(
         .write_text(absolute)
         .map_err(|e| e.to_string())
 }
+
+/// Generic text write, used where the frontend already knows exactly what
+/// to put on the clipboard (e.g. a PlantUML node's source, 01_requirements.md
+/// 5.5) and doesn't need any path resolution first.
+#[tauri::command]
+pub fn write_clipboard_text(app: tauri::AppHandle, text: String) -> Result<(), String> {
+    app.clipboard().write_text(text).map_err(|e| e.to_string())
+}
+
+/// Generic text read, used by Insert > PlantUML Diagram to check whether the
+/// clipboard already holds a PlantUML source before falling back to an
+/// empty diagram (mirroring Insert > Image reading `read_clipboard_for_image`
+/// for its own paste-from-clipboard behavior).
+#[tauri::command]
+pub fn read_clipboard_text(app: tauri::AppHandle) -> Option<String> {
+    app.clipboard().read_text().ok()
+}

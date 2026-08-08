@@ -6,6 +6,7 @@ import { lift, setBlockType } from "@milkdown/prose/commands";
 import type { EditorState } from "@milkdown/prose/state";
 import type { NodeType } from "@milkdown/prose/model";
 import { mathInlineSchema, insertMathNode } from "../editor/nodes/math";
+import { insertPlantumlNodeFromClipboard } from "../editor/nodes/plantuml";
 import { undoCommand, redoCommand } from "@milkdown/plugin-history";
 import {
   toggleStrongCommand,
@@ -151,6 +152,12 @@ const BUTTON_GROUPS: ToolbarButton[][] = [
       label: "∑",
       title: "Insert Math",
       action: (c) => c.editor.action((ctx) => insertMathNode(ctx.get(editorViewCtx), mathInlineSchema.type(ctx))),
+    },
+    {
+      label: "PU",
+      title: "Insert PlantUML",
+      className: "tb-mono",
+      action: (c) => c.editor.action((ctx) => void insertPlantumlNodeFromClipboard(ctx.get(editorViewCtx))),
     },
   ],
 ];

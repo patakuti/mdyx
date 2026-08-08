@@ -8,6 +8,9 @@ import { imageClipboardPlugin, setupImagePasteInterceptor } from "../clipboard/i
 import { resolveImageDisplaySrc } from "../clipboard/image-paste";
 import { remarkMathPlugin, mathInlineSchema, mathBlockSchema } from "./nodes/math";
 import { mathInlineView, mathBlockView } from "./nodes/math-view";
+import { nonPlantumlCodeBlockSchema, plantumlSchema } from "./nodes/plantuml";
+import { plantumlView } from "./nodes/plantuml-view";
+import { plantumlClipboardPlugin } from "../clipboard/plantuml-clipboard-plugin";
 
 // Milkdown's built-in table cell schema allows exactly one paragraph per
 // cell. `mergeCells` (prosemirror-tables, wired to the toolbar's Merge
@@ -56,6 +59,10 @@ export async function setupEditor(root: HTMLElement): Promise<Crepe> {
   crepe.editor.use(mathBlockSchema);
   crepe.editor.use(mathInlineView);
   crepe.editor.use(mathBlockView);
+  crepe.editor.use(nonPlantumlCodeBlockSchema);
+  crepe.editor.use(plantumlSchema);
+  crepe.editor.use(plantumlView);
+  crepe.editor.use(plantumlClipboardPlugin);
 
   await crepe.create();
   setupImagePasteInterceptor(root, crepe);
