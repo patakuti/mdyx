@@ -125,3 +125,73 @@ body {
 .toast-warning {
   background-color: #b8860b;
 }
+
+.math-inline-node {
+  display: inline-block;
+}
+
+.math-block-node {
+  display: block;
+  margin: 8px 0;
+  text-align: center;
+}
+
+.math-inline-node math-field,
+.math-block-node math-field {
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 1px 3px;
+}
+
+.math-inline-node math-field:focus-within,
+.math-block-node math-field:focus-within {
+  border-color: #999999;
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+@media (prefers-color-scheme: dark) {
+  .math-inline-node math-field:focus-within,
+  .math-block-node math-field:focus-within {
+    border-color: #666666;
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+}
+
+/* The "..." menu (font/color/insert-matrix etc.) isn't useful here: MDyX
+   doesn't offer per-character styling anywhere else in the document either,
+   so it shouldn't for math specifically. The virtual-keyboard-toggle
+   (MathLive's symbol palette launcher) and our own inline/block mode-toggle
+   button are kept, but only shown while actually editing the formula. */
+math-field::part(menu-toggle) {
+  display: none;
+}
+
+.math-inline-node:not(:focus-within) math-field::part(virtual-keyboard-toggle),
+.math-block-node:not(:focus-within) math-field::part(virtual-keyboard-toggle) {
+  display: none;
+}
+
+.math-mode-toggle {
+  display: none;
+  margin-left: 4px;
+  padding: 1px 6px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: inherit;
+  border: 1px solid #999999;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.math-inline-node:focus-within .math-mode-toggle,
+.math-block-node:focus-within .math-mode-toggle {
+  display: inline-block;
+}
+
+@media (prefers-color-scheme: dark) {
+  .math-mode-toggle {
+    border-color: #666666;
+  }
+}

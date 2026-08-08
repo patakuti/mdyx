@@ -5,6 +5,7 @@ import { callCommand } from "@milkdown/utils";
 import { lift, setBlockType } from "@milkdown/prose/commands";
 import type { EditorState } from "@milkdown/prose/state";
 import type { NodeType } from "@milkdown/prose/model";
+import { mathInlineSchema, insertMathNode } from "../editor/nodes/math";
 import { undoCommand, redoCommand } from "@milkdown/plugin-history";
 import {
   toggleStrongCommand,
@@ -144,6 +145,13 @@ const BUTTON_GROUPS: ToolbarButton[][] = [
     { label: "⊞", title: "Insert Table", action: (c) => c.editor.action(callCommand(insertTableCommand.key, { row: 2, col: 2 })) },
     { label: "⊔", title: "Merge Cells", action: (c) => c.editor.action(mergeSelectedCells) },
     { label: "⊓", title: "Split Cell", action: (c) => c.editor.action(splitSelectedCell) },
+  ],
+  [
+    {
+      label: "∑",
+      title: "Insert Math",
+      action: (c) => c.editor.action((ctx) => insertMathNode(ctx.get(editorViewCtx), mathInlineSchema.type(ctx))),
+    },
   ],
 ];
 
