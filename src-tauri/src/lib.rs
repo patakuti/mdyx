@@ -24,44 +24,57 @@ pub fn run() {
             commands::config::save_config,
         ])
         .setup(|app| {
-            let open_item = MenuItemBuilder::with_id("file-open", "Open...")
+            // Labels use `&` to mark a mnemonic (Alt+letter menu navigation,
+            // e.g. Alt+F then O for File > Open) — `muda` (Tauri's native
+            // menu backend) turns this into the platform's own underlined
+            // access-key convention (01_requirements.md 3.2節, Phase 8).
+            let open_item = MenuItemBuilder::with_id("file-open", "&Open...")
                 .accelerator("CmdOrCtrl+O")
                 .build(app)?;
-            let save_item = MenuItemBuilder::with_id("file-save", "Save")
+            let save_item = MenuItemBuilder::with_id("file-save", "&Save")
                 .accelerator("CmdOrCtrl+S")
                 .build(app)?;
-            let save_as_item = MenuItemBuilder::with_id("file-save-as", "Save As...")
+            let save_as_item = MenuItemBuilder::with_id("file-save-as", "Save &As...")
                 .accelerator("CmdOrCtrl+Shift+S")
                 .build(app)?;
-            let file_menu = SubmenuBuilder::new(app, "File")
+            let exit_item = MenuItemBuilder::with_id("file-exit", "E&xit")
+                .accelerator("CmdOrCtrl+Q")
+                .build(app)?;
+            let file_menu = SubmenuBuilder::new(app, "&File")
                 .item(&open_item)
                 .item(&save_item)
                 .item(&save_as_item)
+                .separator()
+                .item(&exit_item)
                 .build()?;
 
-            let undo_item = MenuItemBuilder::with_id("edit-undo", "Undo").build(app)?;
-            let redo_item = MenuItemBuilder::with_id("edit-redo", "Redo").build(app)?;
-            let edit_menu = SubmenuBuilder::new(app, "Edit")
+            let undo_item = MenuItemBuilder::with_id("edit-undo", "&Undo").build(app)?;
+            let redo_item = MenuItemBuilder::with_id("edit-redo", "&Redo").build(app)?;
+            let edit_menu = SubmenuBuilder::new(app, "&Edit")
                 .item(&undo_item)
                 .item(&redo_item)
                 .build()?;
 
-            let insert_table_item = MenuItemBuilder::with_id("insert-table", "Table").build(app)?;
+            let insert_table_item = MenuItemBuilder::with_id("insert-table", "&Table")
+                .accelerator("CmdOrCtrl+Alt+T")
+                .build(app)?;
             let insert_image_item =
-                MenuItemBuilder::with_id("insert-image", "Image (from clipboard path)")
+                MenuItemBuilder::with_id("insert-image", "&Image (from clipboard path)")
+                    .accelerator("CmdOrCtrl+Shift+I")
                     .build(app)?;
-            let insert_plantuml_item =
-                MenuItemBuilder::with_id("insert-plantuml", "PlantUML Diagram").build(app)?;
-            let insert_menu = SubmenuBuilder::new(app, "Insert")
+            let insert_plantuml_item = MenuItemBuilder::with_id("insert-plantuml", "&PlantUML Diagram")
+                .accelerator("CmdOrCtrl+Alt+U")
+                .build(app)?;
+            let insert_menu = SubmenuBuilder::new(app, "&Insert")
                 .item(&insert_table_item)
                 .item(&insert_image_item)
                 .item(&insert_plantuml_item)
                 .build()?;
 
             let settings_plantuml_server_item =
-                MenuItemBuilder::with_id("settings-plantuml-server", "PlantUML Server...")
+                MenuItemBuilder::with_id("settings-plantuml-server", "&PlantUML Server...")
                     .build(app)?;
-            let settings_menu = SubmenuBuilder::new(app, "Settings")
+            let settings_menu = SubmenuBuilder::new(app, "&Settings")
                 .item(&settings_plantuml_server_item)
                 .build()?;
 
@@ -74,6 +87,10 @@ pub fn run() {
             app.set_menu(menu)?;
 
             app.on_menu_event(move |app, event| {
+                if event.id().as_ref() == "file-exit" {
+                    app.exit(0);
+                    return;
+                }
                 let Some(window) = app.get_webview_window("main") else {
                     return;
                 };

@@ -16,12 +16,15 @@ fn default_plantuml_server_url() -> String {
 pub struct Config {
     #[serde(default = "default_plantuml_server_url")]
     pub plantuml_server_url: String,
+    #[serde(default)]
+    pub last_opened_dir: Option<String>,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
             plantuml_server_url: default_plantuml_server_url(),
+            last_opened_dir: None,
         }
     }
 }
