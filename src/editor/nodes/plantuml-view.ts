@@ -46,7 +46,16 @@ function createPlantumlNodeView(
       showSvg(svg);
       const pos = getPos();
       if (pos != null) {
-        view.dispatch(view.state.tr.setNodeAttribute(pos, "svg", svg));
+        // Caching the rendered SVG onto the node is a background side
+        // effect, not a user edit — it happens on every load/tab-switch for
+        // any PlantUML node whose `svg` isn't cached yet (design doc 6章:
+        // svg is a session-only cache, never saved to the markdown file).
+        // `addToHistory: false` keeps it out of the undo stack, and
+        // TabManager (tabs/tab-manager.ts) reads the same meta flag to keep
+        // it from marking the tab as having unsaved changes.
+        const tr = view.state.tr.setNodeAttribute(pos, "svg", svg);
+        tr.setMeta("addToHistory", false);
+        view.dispatch(tr);
       }
     } catch (error) {
       if (token !== renderToken) return;

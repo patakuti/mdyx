@@ -4,6 +4,14 @@ mod path_resolver;
 use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder};
 use tauri::{Emitter, Manager};
 
+/// Only reachable after the frontend has resolved any unsaved tabs and
+/// persisted the session (main.ts's `handleCloseRequested`) — see the
+/// `CloseRequested` interception in `run()` below (02_design.md 12.6節).
+#[tauri::command]
+fn confirm_close(app: tauri::AppHandle) {
+    app.exit(0);
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -14,6 +22,7 @@ pub fn run() {
             commands::file_io::open_file,
             commands::file_io::save_file,
             commands::file_io::save_file_as,
+            commands::file_io::read_file,
             commands::clipboard::read_clipboard_for_image,
             commands::clipboard::copy_image_path,
             commands::clipboard::resolve_image_display_path,
@@ -21,13 +30,18 @@ pub fn run() {
             commands::clipboard::read_clipboard_text,
             commands::plantuml::render_plantuml,
             commands::config::get_config,
-            commands::config::save_config,
+            commands::config::save_plantuml_server_url,
+            commands::config::save_open_tabs,
+            confirm_close,
         ])
         .setup(|app| {
             // Labels use `&` to mark a mnemonic (Alt+letter menu navigation,
             // e.g. Alt+F then O for File > Open) — `muda` (Tauri's native
             // menu backend) turns this into the platform's own underlined
             // access-key convention (01_requirements.md 3.2節, Phase 8).
+            let new_tab_item = MenuItemBuilder::with_id("file-new-tab", "&New Tab")
+                .accelerator("CmdOrCtrl+N")
+                .build(app)?;
             let open_item = MenuItemBuilder::with_id("file-open", "&Open...")
                 .accelerator("CmdOrCtrl+O")
                 .build(app)?;
@@ -41,6 +55,7 @@ pub fn run() {
                 .accelerator("CmdOrCtrl+Q")
                 .build(app)?;
             let file_menu = SubmenuBuilder::new(app, "&File")
+                .item(&new_tab_item)
                 .item(&open_item)
                 .item(&save_item)
                 .item(&save_as_item)
@@ -87,14 +102,19 @@ pub fn run() {
             app.set_menu(menu)?;
 
             app.on_menu_event(move |app, event| {
-                if event.id().as_ref() == "file-exit" {
-                    app.exit(0);
-                    return;
-                }
                 let Some(window) = app.get_webview_window("main") else {
                     return;
                 };
+                if event.id().as_ref() == "file-exit" {
+                    // Goes through the same `CloseRequested` interception as
+                    // the window's own close button, instead of exiting
+                    // directly, so File > Exit also confirms unsaved tabs
+                    // (02_design.md 12.6節).
+                    let _ = window.close();
+                    return;
+                }
                 let event_name = match event.id().as_ref() {
+                    "file-new-tab" => Some("menu-file-new-tab"),
                     "file-open" => Some("menu-file-open"),
                     "file-save" => Some("menu-file-save"),
                     "file-save-as" => Some("menu-file-save-as"),
@@ -110,6 +130,22 @@ pub fn run() {
                     let _ = window.emit(event_name, ());
                 }
             });
+
+            // Block the window from closing immediately (whether from the
+            // OS close button or File > Exit's `window.close()` above) and
+            // hand off to the frontend instead: it may need to show one or
+            // more unsaved-changes confirmations first (`TabManager`,
+            // 02_design.md 12.5節/12.6節). The frontend calls the
+            // `confirm_close` command once it's actually ready to exit.
+            if let Some(window) = app.get_webview_window("main") {
+                let emit_window = window.clone();
+                window.on_window_event(move |event| {
+                    if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                        api.prevent_close();
+                        let _ = emit_window.emit("app-close-requested", ());
+                    }
+                });
+            }
 
             Ok(())
         })

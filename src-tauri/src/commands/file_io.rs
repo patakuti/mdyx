@@ -58,6 +58,15 @@ pub fn save_file(path: String, content: String) -> Result<(), String> {
     std::fs::write(&path, content).map_err(|e| e.to_string())
 }
 
+/// Reads a file by an already-known path, with no file picker dialog. Used
+/// for session restore (02_design.md 12.7節): a path missing/unreadable
+/// (moved or deleted since last exit) surfaces as an `Err`, which the
+/// frontend turns into a per-file warning toast and skips that tab.
+#[tauri::command]
+pub fn read_file(path: String) -> Result<String, String> {
+    std::fs::read_to_string(&path).map_err(|e| e.to_string())
+}
+
 #[tauri::command]
 pub async fn save_file_as(app: tauri::AppHandle, content: String) -> Result<Option<String>, String> {
     let mut dialog = app.dialog().file().add_filter("Markdown", &["md", "markdown"]);

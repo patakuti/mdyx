@@ -6,7 +6,11 @@ import { insertImageCommand, imageSchema } from "@milkdown/preset-commonmark";
 import { NodeSelection } from "@milkdown/prose/state";
 
 import { showToast } from "../ui/toast";
-import { getCurrentFilePath } from "../file/current-file";
+
+/// Returns the file path of whichever tab's content is currently loaded
+/// into the (single, shared) `EditorView` — see tabs/tab-manager.ts. Image
+/// paths are resolved relative to this.
+export type ActiveFilePathGetter = () => string | null;
 
 type ClipboardPasteContent =
   | { kind: "path"; path: string; isRelative: boolean; outOfScope: boolean }
@@ -19,12 +23,15 @@ const URL_SCHEME_PATTERN = /^[a-z][a-z0-9+.-]*:/i;
 /// 5.2) into a URL the WebView can actually load. `src` values that are
 /// already a URL (http(s)/data/etc., e.g. a hand-written `![]()` link) pass
 /// through unchanged.
-export async function resolveImageDisplaySrc(src: string): Promise<string> {
+export async function resolveImageDisplaySrc(
+  src: string,
+  getActiveFilePath: ActiveFilePathGetter
+): Promise<string> {
   if (!src || URL_SCHEME_PATTERN.test(src)) return src;
 
   const absolutePath = await invoke<string>("resolve_image_display_path", {
     src,
-    currentFilePath: getCurrentFilePath(),
+    currentFilePath: getActiveFilePath(),
   });
   return convertFileSrc(absolutePath);
 }
@@ -35,9 +42,9 @@ export function isImageNodeSelected(ctx: Ctx): boolean {
   return selection instanceof NodeSelection && selection.node.type === imageSchema.type(ctx);
 }
 
-export async function pasteImageFromClipboard(ctx: Ctx): Promise<void> {
+export async function pasteImageFromClipboard(ctx: Ctx, getActiveFilePath: ActiveFilePathGetter): Promise<void> {
   const result = await invoke<ClipboardPasteContent>("read_clipboard_for_image", {
-    currentFilePath: getCurrentFilePath(),
+    currentFilePath: getActiveFilePath(),
   });
 
   if (result.kind === "binary") {
@@ -59,7 +66,7 @@ export async function pasteImageFromClipboard(ctx: Ctx): Promise<void> {
   callCommand(insertImageCommand.key, { src: result.path })(ctx);
 }
 
-export async function copyImagePath(ctx: Ctx): Promise<void> {
+export async function copyImagePath(ctx: Ctx, getActiveFilePath: ActiveFilePathGetter): Promise<void> {
   const view = ctx.get(editorViewCtx);
   const { selection } = view.state;
   if (!(selection instanceof NodeSelection) || selection.node.type !== imageSchema.type(ctx)) {
@@ -69,6 +76,6 @@ export async function copyImagePath(ctx: Ctx): Promise<void> {
 
   await invoke("copy_image_path", {
     src,
-    currentFilePath: getCurrentFilePath(),
+    currentFilePath: getActiveFilePath(),
   });
 }

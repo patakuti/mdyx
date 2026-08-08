@@ -4,6 +4,7 @@ import { Plugin } from "@milkdown/prose/state";
 import type { Transaction } from "@milkdown/prose/state";
 
 import { isImageNodeSelected, pasteImageFromClipboard, copyImagePath } from "./image-paste";
+import type { ActiveFilePathGetter } from "./image-paste";
 import { showToast } from "../ui/toast";
 
 const BINARY_IMAGE_REJECTED_MESSAGE =
@@ -21,46 +22,52 @@ const BINARY_IMAGE_REJECTED_MESSAGE =
 /// any image node whose `src` is a `blob:` URL — the shape Milkdown's
 /// built-in upload plugin produces when it accepts raw binary. This is
 /// timing-independent regardless of which internal plugin handled the paste.
-export const imageClipboardPlugin = $prose((ctx) => {
-  return new Plugin({
-    props: {
-      handleDOMEvents: {
-        copy: (_view, event) => {
-          if (!isImageNodeSelected(ctx)) return false;
-          event.preventDefault();
-          void copyImagePath(ctx);
-          return true;
+export function createImageClipboardPlugin(getActiveFilePath: ActiveFilePathGetter) {
+  return $prose((ctx) => {
+    return new Plugin({
+      props: {
+        handleDOMEvents: {
+          copy: (_view, event) => {
+            if (!isImageNodeSelected(ctx)) return false;
+            event.preventDefault();
+            void copyImagePath(ctx, getActiveFilePath);
+            return true;
+          },
         },
       },
-    },
-    appendTransaction: (transactions, _oldState, newState) => {
-      if (!transactions.some((tr) => tr.docChanged)) return null;
+      appendTransaction: (transactions, _oldState, newState) => {
+        if (!transactions.some((tr) => tr.docChanged)) return null;
 
-      const blobImages: { pos: number; size: number }[] = [];
-      newState.doc.descendants((node, pos) => {
-        const src = node.attrs.src;
-        if (typeof src === "string" && src.startsWith("blob:")) {
-          blobImages.push({ pos, size: node.nodeSize });
+        const blobImages: { pos: number; size: number }[] = [];
+        newState.doc.descendants((node, pos) => {
+          const src = node.attrs.src;
+          if (typeof src === "string" && src.startsWith("blob:")) {
+            blobImages.push({ pos, size: node.nodeSize });
+          }
+        });
+        if (blobImages.length === 0) return null;
+
+        let tr: Transaction = newState.tr;
+        for (const { pos, size } of blobImages.sort((a, b) => b.pos - a.pos)) {
+          tr = tr.delete(pos, pos + size);
         }
-      });
-      if (blobImages.length === 0) return null;
-
-      let tr: Transaction = newState.tr;
-      for (const { pos, size } of blobImages.sort((a, b) => b.pos - a.pos)) {
-        tr = tr.delete(pos, pos + size);
-      }
-      showToast(BINARY_IMAGE_REJECTED_MESSAGE, "error");
-      return tr;
-    },
+        showToast(BINARY_IMAGE_REJECTED_MESSAGE, "error");
+        return tr;
+      },
+    });
   });
-});
+}
 
 /// Intercepts paste in the capture phase, before it reaches ProseMirror's
 /// own paste handling, so that pasting while an image node is selected
 /// resolves the clipboard path via Rust (reliable — it reads the system
 /// clipboard directly via arboard, not the DOM event) instead of Milkdown's
 /// default text/HTML paste replacing the selection.
-export function setupImagePasteInterceptor(root: HTMLElement, crepe: Crepe): void {
+export function setupImagePasteInterceptor(
+  root: HTMLElement,
+  crepe: Crepe,
+  getActiveFilePath: ActiveFilePathGetter
+): void {
   root.addEventListener(
     "paste",
     (event) => {
@@ -69,7 +76,7 @@ export function setupImagePasteInterceptor(root: HTMLElement, crepe: Crepe): voi
 
       event.preventDefault();
       event.stopPropagation();
-      void pasteImageFromClipboard(ctx);
+      void pasteImageFromClipboard(ctx, getActiveFilePath);
     },
     true
   );
