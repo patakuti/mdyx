@@ -4,7 +4,7 @@ import { editorViewCtx } from "@milkdown/core";
 import { callCommand } from "@milkdown/utils";
 import { lift, setBlockType } from "@milkdown/prose/commands";
 import type { EditorState } from "@milkdown/prose/state";
-import type { NodeType } from "@milkdown/prose/model";
+import type { MarkType, NodeType } from "@milkdown/prose/model";
 import { mathInlineSchema, insertMathNode } from "../editor/nodes/math";
 import { insertPlantumlNodeFromClipboard } from "../editor/nodes/plantuml";
 import { insertTableFromClipboard } from "../clipboard/table-insert";
@@ -25,8 +25,11 @@ import {
   blockquoteSchema,
   codeBlockSchema,
   paragraphSchema,
+  strongSchema,
+  emphasisSchema,
+  inlineCodeSchema,
 } from "@milkdown/preset-commonmark";
-import { toggleStrikethroughCommand } from "@milkdown/preset-gfm";
+import { toggleStrikethroughCommand, strikethroughSchema } from "@milkdown/preset-gfm";
 import { mergeCells, splitCellWithType, findTable } from "@milkdown/prose/tables";
 
 // wrapInHeadingCommand/wrapInXxxListCommand/wrapInBlockquoteCommand only ever
@@ -42,12 +45,25 @@ function isInNodeType(state: EditorState, nodeType: NodeType): boolean {
   return false;
 }
 
+// Same definition prosemirror-commands' `toggleMark` itself uses to decide
+// whether clicking would add or remove the mark (`rangeHasMark`, confirmed
+// by reading its source: default `removeWhenPresent` means "present
+// anywhere in the selection" removes for the whole selection) — so "active"
+// here always means the same thing as "clicking now will turn this off"
+// (01_requirements.md 3.6節, 02_design.md 13.1節).
+function markActive(state: EditorState, markType: MarkType): boolean {
+  const { from, $from, to, empty } = state.selection;
+  if (empty) return !!markType.isInSet(state.storedMarks || $from.marks());
+  return state.doc.rangeHasMark(from, to, markType);
+}
+
+function isHeadingLevel(ctx: Ctx, level: number): boolean {
+  const node = ctx.get(editorViewCtx).state.selection.$from.parent;
+  return node.type === headingSchema.type(ctx) && node.attrs.level === level;
+}
+
 function toggleHeading(ctx: Ctx, level: number): void {
-  const view = ctx.get(editorViewCtx);
-  const node = view.state.selection.$from.parent;
-  const isSameLevel =
-    node.type === headingSchema.type(ctx) && node.attrs.level === level;
-  callCommand(wrapInHeadingCommand.key, isSameLevel ? 0 : level)(ctx);
+  callCommand(wrapInHeadingCommand.key, isHeadingLevel(ctx, level) ? 0 : level)(ctx);
 }
 
 function toggleList(ctx: Ctx, listType: NodeType, wrapKey: typeof wrapInBulletListCommand.key): void {
@@ -99,11 +115,13 @@ function splitSelectedCell(ctx: Ctx): void {
   })(state, dispatch);
 }
 
+function isCodeBlockActive(ctx: Ctx): boolean {
+  return ctx.get(editorViewCtx).state.selection.$from.parent.type === codeBlockSchema.type(ctx);
+}
+
 function toggleCodeBlock(ctx: Ctx): void {
-  const view = ctx.get(editorViewCtx);
-  const { state, dispatch } = view;
-  const node = state.selection.$from.parent;
-  if (node.type === codeBlockSchema.type(ctx)) {
+  const { state, dispatch } = ctx.get(editorViewCtx);
+  if (isCodeBlockActive(ctx)) {
     setBlockType(paragraphSchema.type(ctx))(state, dispatch);
     return;
   }
@@ -127,6 +145,10 @@ interface ToolbarButton {
   className?: string;
   action: (crepe: Crepe) => void;
   shortcut?: ToolbarShortcut;
+  /// Whether the current cursor/selection is "inside" this button's format
+  /// (01_requirements.md 3.6節). Omitted for one-shot actions (Undo, Insert
+  /// Table, ...) that have no such state.
+  isActive?: (ctx: Ctx) => boolean;
 }
 
 // 01_requirements.md 3.2節: shortcuts that exist in real LyX use LyX's own
@@ -148,6 +170,7 @@ const BUTTON_GROUPS: ToolbarButton[][] = [
       className: "tb-bold",
       action: (c) => c.editor.action(callCommand(toggleStrongCommand.key)),
       shortcut: { code: "KeyB", ctrl: true },
+      isActive: (ctx) => markActive(ctx.get(editorViewCtx).state, strongSchema.type(ctx)),
     },
     {
       label: "I",
@@ -155,6 +178,7 @@ const BUTTON_GROUPS: ToolbarButton[][] = [
       className: "tb-italic",
       action: (c) => c.editor.action(callCommand(toggleEmphasisCommand.key)),
       shortcut: { code: "KeyE", ctrl: true },
+      isActive: (ctx) => markActive(ctx.get(editorViewCtx).state, emphasisSchema.type(ctx)),
     },
     {
       label: "S",
@@ -162,6 +186,7 @@ const BUTTON_GROUPS: ToolbarButton[][] = [
       className: "tb-strike",
       action: (c) => c.editor.action(callCommand(toggleStrikethroughCommand.key)),
       shortcut: { code: "KeyX", ctrl: true, shift: true },
+      isActive: (ctx) => markActive(ctx.get(editorViewCtx).state, strikethroughSchema.type(ctx)),
     },
     {
       label: "</>",
@@ -169,6 +194,7 @@ const BUTTON_GROUPS: ToolbarButton[][] = [
       className: "tb-mono",
       action: (c) => c.editor.action(callCommand(toggleInlineCodeCommand.key)),
       shortcut: { code: "KeyM", ctrl: true, alt: true },
+      isActive: (ctx) => markActive(ctx.get(editorViewCtx).state, inlineCodeSchema.type(ctx)),
     },
   ],
   [
@@ -177,18 +203,21 @@ const BUTTON_GROUPS: ToolbarButton[][] = [
       title: "Heading 1 (Ctrl+Alt+1)",
       action: (c) => c.editor.action((ctx) => toggleHeading(ctx, 1)),
       shortcut: { code: "Digit1", ctrl: true, alt: true },
+      isActive: (ctx) => isHeadingLevel(ctx, 1),
     },
     {
       label: "H2",
       title: "Heading 2 (Ctrl+Alt+2)",
       action: (c) => c.editor.action((ctx) => toggleHeading(ctx, 2)),
       shortcut: { code: "Digit2", ctrl: true, alt: true },
+      isActive: (ctx) => isHeadingLevel(ctx, 2),
     },
     {
       label: "H3",
       title: "Heading 3 (Ctrl+Alt+3)",
       action: (c) => c.editor.action((ctx) => toggleHeading(ctx, 3)),
       shortcut: { code: "Digit3", ctrl: true, alt: true },
+      isActive: (ctx) => isHeadingLevel(ctx, 3),
     },
   ],
   [
@@ -197,18 +226,21 @@ const BUTTON_GROUPS: ToolbarButton[][] = [
       title: "Bullet List (Ctrl+Shift+8)",
       action: (c) => c.editor.action((ctx) => toggleList(ctx, bulletListSchema.type(ctx), wrapInBulletListCommand.key)),
       shortcut: { code: "Digit8", ctrl: true, shift: true },
+      isActive: (ctx) => isInNodeType(ctx.get(editorViewCtx).state, bulletListSchema.type(ctx)),
     },
     {
       label: "1.",
       title: "Ordered List (Ctrl+Shift+7)",
       action: (c) => c.editor.action((ctx) => toggleList(ctx, orderedListSchema.type(ctx), wrapInOrderedListCommand.key)),
       shortcut: { code: "Digit7", ctrl: true, shift: true },
+      isActive: (ctx) => isInNodeType(ctx.get(editorViewCtx).state, orderedListSchema.type(ctx)),
     },
     {
       label: "”",
       title: "Blockquote (Ctrl+Shift+9)",
       action: (c) => c.editor.action(toggleBlockquote),
       shortcut: { code: "Digit9", ctrl: true, shift: true },
+      isActive: (ctx) => isInNodeType(ctx.get(editorViewCtx).state, blockquoteSchema.type(ctx)),
     },
     {
       label: "{}",
@@ -216,6 +248,7 @@ const BUTTON_GROUPS: ToolbarButton[][] = [
       className: "tb-mono",
       action: (c) => c.editor.action(toggleCodeBlock),
       shortcut: { code: "KeyC", ctrl: true, alt: true },
+      isActive: isCodeBlockActive,
     },
   ],
   [
@@ -254,7 +287,14 @@ function matchesShortcut(event: KeyboardEvent, shortcut: ToolbarShortcut): boole
   );
 }
 
-export function setupToolbar(container: HTMLElement, crepe: Crepe): void {
+/// Called after every editor update (a real edit, a selection change, or a
+/// tab switch — see `editor/setup.ts`'s `toolbarSyncPlugin`,
+/// 02_design.md 13.2節) to refresh which toggle buttons look "pressed".
+export type ToolbarActiveStateUpdater = () => void;
+
+export function setupToolbar(container: HTMLElement, crepe: Crepe): ToolbarActiveStateUpdater {
+  const toggleButtons: { el: HTMLButtonElement; isActive: (ctx: Ctx) => boolean }[] = [];
+
   BUTTON_GROUPS.forEach((group, index) => {
     if (index > 0) {
       const separator = document.createElement("span");
@@ -271,6 +311,7 @@ export function setupToolbar(container: HTMLElement, crepe: Crepe): void {
       el.addEventListener("mousedown", (event) => event.preventDefault());
       el.addEventListener("click", () => button.action(crepe));
       container.appendChild(el);
+      if (button.isActive) toggleButtons.push({ el, isActive: button.isActive });
     }
   });
 
@@ -284,6 +325,13 @@ export function setupToolbar(container: HTMLElement, crepe: Crepe): void {
       }
     }
   });
+
+  return () => {
+    const ctx = crepe.editor.ctx;
+    for (const { el, isActive } of toggleButtons) {
+      el.classList.toggle("active", isActive(ctx));
+    }
+  };
 }
 
 export function runInsertTable(crepe: Crepe): void {

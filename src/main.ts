@@ -25,7 +25,16 @@ window.addEventListener("DOMContentLoaded", async () => {
   // is kept in lockstep purely via `tabManager.onChange` below, never set
   // from anywhere else, so `TabManager` remains the single source of truth.
   let activeFilePath: string | null = null;
-  const crepe = await setupEditor(editorRoot, () => activeFilePath);
+  // Same forward-reference pattern for the toolbar's toggle-button refresh
+  // (Phase 10, 02_design.md 13.2節): `setupEditor` registers the plugin
+  // that will call this on every editor update, but the real function only
+  // exists once `setupToolbar` runs, further down.
+  let refreshToolbar: (() => void) | undefined;
+  const crepe = await setupEditor(
+    editorRoot,
+    () => activeFilePath,
+    () => refreshToolbar?.()
+  );
 
   const tabManager = new TabManager(crepe);
   tabManager.init();
@@ -33,7 +42,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     activeFilePath = tabManager.getActiveFilePath();
   });
 
-  setupToolbar(toolbarRoot, crepe);
+  refreshToolbar = setupToolbar(toolbarRoot, crepe);
   setupTabBar(tabBarRoot, emptyStateRoot, editorRoot, tabManager);
 
   const config = await getConfig();

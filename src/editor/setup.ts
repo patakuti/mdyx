@@ -1,5 +1,8 @@
 import { Crepe } from "@milkdown/crepe";
 import { tableCellSchema, tableHeaderSchema } from "@milkdown/preset-gfm";
+import { $prose } from "@milkdown/utils";
+import { Plugin } from "@milkdown/prose/state";
+import type { EditorView } from "@milkdown/prose/view";
 
 import "@milkdown/crepe/theme/common/style.css";
 import "@milkdown/crepe/theme/classic.css";
@@ -34,12 +37,37 @@ const relaxedTableHeaderSchema = tableHeaderSchema.extendSchema((factory) => (ct
   content: "paragraph+",
 }));
 
+// Notifies `onEditorUpdate` after every editor update — a real edit, a
+// selection-only change (e.g. arrow keys), or a tab switch (`TabManager`
+// calling `view.updateState(...)` directly, 02_design.md 12.1節) — so the
+// toolbar can refresh which buttons look "pressed" (01_requirements.md
+// 3.6節). A ProseMirror plugin `view` lifecycle is used rather than adding
+// a bespoke notification hook to `TabManager`: `EditorView.updateState()`
+// already calls every registered plugin's `view.update(...)` on both of the
+// above paths (confirmed by reading prosemirror-view's source, 02_design.md
+// 13.2節), so this needs no special-casing for tabs at all.
+function createToolbarSyncPlugin(onEditorUpdate: (view: EditorView) => void) {
+  return $prose(
+    () =>
+      new Plugin({
+        view: (view) => {
+          onEditorUpdate(view);
+          return { update: (view) => onEditorUpdate(view) };
+        },
+      })
+  );
+}
+
 // Tabs (Phase 9) mean image paths must resolve relative to whichever tab is
 // currently active, not a single fixed document — see tabs/tab-manager.ts
 // and image-paste.ts's `ActiveFilePathGetter`. `setupEditor` runs before the
 // `TabManager` exists (it needs a `Crepe` instance to wrap), so the caller
 // passes a getter closure instead of a plain value.
-export async function setupEditor(root: HTMLElement, getActiveFilePath: ActiveFilePathGetter): Promise<Crepe> {
+export async function setupEditor(
+  root: HTMLElement,
+  getActiveFilePath: ActiveFilePathGetter,
+  onEditorUpdate: (view: EditorView) => void
+): Promise<Crepe> {
   const crepe = new Crepe({
     root,
     // No placeholder document (Phase 9, 01_requirements.md 3.5節): the app
@@ -72,6 +100,7 @@ export async function setupEditor(root: HTMLElement, getActiveFilePath: ActiveFi
   crepe.editor.use(plantumlSchema);
   crepe.editor.use(plantumlView);
   crepe.editor.use(plantumlClipboardPlugin);
+  crepe.editor.use(createToolbarSyncPlugin(onEditorUpdate));
 
   await crepe.create();
   setupImagePasteInterceptor(root, crepe, getActiveFilePath);

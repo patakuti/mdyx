@@ -118,6 +118,19 @@ body {
   background-color: #ffffff;
 }
 
+/* Reflects whether the cursor/selection is currently "inside" this
+   button's format (Phase 10, 01_requirements.md 3.6節). Distinct from
+   :hover (an accent color rather than the neutral hover grey) so the two
+   states stay visually distinguishable even when both apply at once. */
+.toolbar-button.active {
+  border-color: #4a90d9;
+  background-color: #cfe4fb;
+}
+
+.toolbar-button.active:hover {
+  background-color: #b9d8f7;
+}
+
 .tb-bold {
   font-weight: 700;
 }
@@ -154,6 +167,15 @@ body {
   .toolbar-button:hover {
     border-color: #666666;
     background-color: #3a3a3a;
+  }
+
+  .toolbar-button.active {
+    border-color: #4a90d9;
+    background-color: #2a4a6e;
+  }
+
+  .toolbar-button.active:hover {
+    background-color: #345d87;
   }
 
   .toolbar-separator {
