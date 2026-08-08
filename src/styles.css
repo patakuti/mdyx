@@ -195,3 +195,118 @@ math-field::part(menu-toggle) {
     border-color: #666666;
   }
 }
+
+.plantuml-node {
+  margin: 8px 0;
+  padding: 8px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  text-align: center;
+  overflow-x: auto;
+  font-size: 13px;
+  color: #666666;
+  cursor: pointer;
+}
+
+.plantuml-node svg {
+  max-width: 100%;
+}
+
+.plantuml-node.ProseMirror-selectednode {
+  border-color: #999999;
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.plantuml-node-error {
+  text-align: left;
+  white-space: pre-wrap;
+  color: #c0392b;
+}
+
+@media (prefers-color-scheme: dark) {
+  .plantuml-node {
+    color: #aaaaaa;
+  }
+
+  .plantuml-node.ProseMirror-selectednode {
+    border-color: #666666;
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+
+  .plantuml-node-error {
+    color: #e57368;
+  }
+}
+
+.settings-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.35);
+}
+
+.settings-panel {
+  width: 420px;
+  max-width: calc(100vw - 32px);
+  padding: 16px 20px;
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: #0f0f0f;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.settings-panel h2 {
+  margin: 0 0 12px;
+  font-size: 16px;
+}
+
+.settings-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+
+.settings-input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 13px;
+  border: 1px solid #cccccc;
+  border-radius: 4px;
+}
+
+.settings-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.settings-buttons button {
+  padding: 6px 14px;
+  border: 1px solid #999999;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  color: inherit;
+}
+
+@media (prefers-color-scheme: dark) {
+  .settings-panel {
+    background-color: #2f2f2f;
+    color: #f6f6f6;
+  }
+
+  .settings-input {
+    border-color: #555555;
+    background-color: #262626;
+    color: inherit;
+  }
+
+  .settings-buttons button {
+    border-color: #666666;
+  }
+}
