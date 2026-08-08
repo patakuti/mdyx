@@ -1,8 +1,9 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { Crepe } from "@milkdown/crepe";
-import { replaceAll } from "@milkdown/utils";
 
 import { getCurrentFilePath, setCurrentFilePath } from "./current-file";
+import { replaceAllWithHtmlTables } from "../editor/markdown-io/parser";
+import { getMarkdownWithHtmlTables } from "../editor/markdown-io/serializer";
 
 interface OpenedFile {
   path: string;
@@ -20,7 +21,7 @@ export class FileManager {
     const opened = await invoke<OpenedFile | null>("open_file");
     if (!opened) return;
 
-    this.crepe.editor.action(replaceAll(opened.content, true));
+    this.crepe.editor.action(replaceAllWithHtmlTables(opened.content, true));
     setCurrentFilePath(opened.path);
   }
 
@@ -29,7 +30,7 @@ export class FileManager {
     if (currentPath) {
       await invoke("save_file", {
         path: currentPath,
-        content: this.crepe.getMarkdown(),
+        content: this.crepe.editor.action(getMarkdownWithHtmlTables),
       });
       return;
     }
@@ -38,7 +39,7 @@ export class FileManager {
 
   async saveAs(): Promise<void> {
     const path = await invoke<string | null>("save_file_as", {
-      content: this.crepe.getMarkdown(),
+      content: this.crepe.editor.action(getMarkdownWithHtmlTables),
     });
     if (path) {
       setCurrentFilePath(path);

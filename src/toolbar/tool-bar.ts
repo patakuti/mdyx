@@ -27,6 +27,7 @@ import {
   toggleStrikethroughCommand,
   insertTableCommand,
 } from "@milkdown/preset-gfm";
+import { mergeCells, splitCellWithType, findTable } from "@milkdown/prose/tables";
 
 // wrapInHeadingCommand/wrapInXxxListCommand/wrapInBlockquoteCommand only ever
 // apply the given block type; they don't undo it when it's already applied
@@ -66,6 +67,36 @@ function toggleBlockquote(ctx: Ctx): void {
     return;
   }
   callCommand(wrapInBlockquoteCommand.key)(ctx);
+}
+
+function mergeSelectedCells(ctx: Ctx): void {
+  const view = ctx.get(editorViewCtx);
+  mergeCells(view.state, view.dispatch);
+}
+
+// `splitCell` (prosemirror-tables' plain export) always gives new cells the
+// same node type as the cell being split. Milkdown's GFM table schema has
+// two distinct row types (`table_header_row` only accepts `table_header`,
+// `table_row` only accepts `table_cell`), so splitting a header cell with
+// rowspan > 1 makes it try to insert a `table_header` into a `table_row` —
+// which doesn't fit that row's content expression, so the insert escapes
+// the table entirely and drags along whatever followed it (measured/
+// reproduced from a user bug report: splitting a 2-row header cell dropped
+// the sibling row's other cell into a second, malformed table). Using
+// `splitCellWithType` with a type picker based on each target row's actual
+// type avoids the mismatch.
+function splitSelectedCell(ctx: Ctx): void {
+  const view = ctx.get(editorViewCtx);
+  const { state, dispatch } = view;
+  const table = findTable(state.selection.$from);
+  if (!table) return;
+
+  splitCellWithType(({ row }) => {
+    const rowNode = table.node.child(row);
+    return rowNode.type.name === "table_header_row"
+      ? state.schema.nodes.table_header!
+      : state.schema.nodes.table_cell!;
+  })(state, dispatch);
 }
 
 function toggleCodeBlock(ctx: Ctx): void {
@@ -111,6 +142,8 @@ const BUTTON_GROUPS: ToolbarButton[][] = [
   [
     { label: "―", title: "Horizontal Rule", action: (c) => c.editor.action(callCommand(insertHrCommand.key)) },
     { label: "⊞", title: "Insert Table", action: (c) => c.editor.action(callCommand(insertTableCommand.key, { row: 2, col: 2 })) },
+    { label: "⊔", title: "Merge Cells", action: (c) => c.editor.action(mergeSelectedCells) },
+    { label: "⊓", title: "Split Cell", action: (c) => c.editor.action(splitSelectedCell) },
   ],
 ];
 
