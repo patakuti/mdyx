@@ -36,7 +36,7 @@ const relaxedTableHeaderSchema = tableHeaderSchema.extendSchema((factory) => (ct
 export async function setupEditor(root: HTMLElement): Promise<Crepe> {
   const crepe = new Crepe({
     root,
-    defaultValue: "# MDyX\n\nWYSIWYG Markdown editor.\n",
+    defaultValue: "# MDyX\n\nWYSIWYM Markdown editor.\n",
     features: {
       // Crepe's built-in Latex feature (KaTeX + CodeMirror source editing)
       // is on by default and would otherwise compete with our own

@@ -1,5 +1,5 @@
 import type { Ctx } from "@milkdown/ctx";
-import { schemaCtx } from "@milkdown/core";
+import { parserCtx, schemaCtx } from "@milkdown/core";
 import { DOMParser as ProseDOMParser, DOMSerializer, Fragment } from "@milkdown/prose/model";
 import type { Node as PMNode } from "@milkdown/prose/model";
 import { tableSchema } from "@milkdown/preset-gfm";
@@ -54,14 +54,9 @@ function tableNodeToHtml(ctx: Ctx, table: PMNode): string {
   return container.innerHTML;
 }
 
-function htmlToTableNode(ctx: Ctx, html: string): PMNode | null {
-  const schema = ctx.get(schemaCtx);
-  const container = document.createElement("div");
-  container.innerHTML = html;
-  const doc = ProseDOMParser.fromSchema(schema).parse(container);
-
+function firstTableNode(ctx: Ctx, root: PMNode): PMNode | null {
   let table: PMNode | null = null;
-  doc.descendants((node) => {
+  root.descendants((node) => {
     if (table) return false;
     if (node.type === tableSchema.type(ctx)) {
       table = node;
@@ -70,6 +65,26 @@ function htmlToTableNode(ctx: Ctx, html: string): PMNode | null {
     return true;
   });
   return table;
+}
+
+export function htmlToTableNode(ctx: Ctx, html: string): PMNode | null {
+  const schema = ctx.get(schemaCtx);
+  const container = document.createElement("div");
+  container.innerHTML = html;
+  const doc = ProseDOMParser.fromSchema(schema).parse(container);
+  return firstTableNode(ctx, doc);
+}
+
+/// Parses `markdown` (e.g. clipboard `text/plain`) with Milkdown's own
+/// markdown parser and returns its first `table` node, or `null` if it
+/// doesn't contain a GFM pipe-table. Used by Insert > Table's clipboard
+/// detection (01_requirements.md 5.3節, 02_design.md 4.6節) so it accepts
+/// exactly the same pipe-table syntax File > Open does.
+export function markdownToTableNode(ctx: Ctx, markdown: string): PMNode | null {
+  const parser = ctx.get(parserCtx);
+  const doc = parser(markdown);
+  if (!doc) return null;
+  return firstTableNode(ctx, doc);
 }
 
 function mapDescendants(node: PMNode, replace: (node: PMNode) => PMNode | null): PMNode {

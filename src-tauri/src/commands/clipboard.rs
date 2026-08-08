@@ -1,6 +1,7 @@
 use std::path::Path;
 
 use serde::Serialize;
+use tauri::Manager;
 use tauri_plugin_clipboard_manager::ClipboardExt;
 
 use crate::path_resolver;
@@ -34,12 +35,16 @@ pub fn read_clipboard_for_image(
 ) -> Result<ClipboardPasteContent, String> {
     let clipboard = app.clipboard();
     let base_dir = base_dir_of(&current_file_path);
+    let home_dir = app.path().home_dir().ok();
 
     if let Ok(text) = clipboard.read_text() {
         let trimmed = text.trim();
         if !trimmed.is_empty() {
-            if let Some(resolved) = path_resolver::resolve_for_paste(trimmed, base_dir.as_deref())
-            {
+            if let Some(resolved) = path_resolver::resolve_for_paste(
+                trimmed,
+                base_dir.as_deref(),
+                home_dir.as_deref(),
+            ) {
                 return Ok(ClipboardPasteContent::Path {
                     path: resolved.path,
                     is_relative: resolved.is_relative,
