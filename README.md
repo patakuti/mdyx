@@ -37,5 +37,5 @@ npm run tauri build
 
 ## Current Status
 
-Phase 0-4 complete: a Tauri + Milkdown (Crepe) editor with a native File/Edit/Insert menu (Open / Save / Save As, Undo / Redo, Insert Table / Image), an always-visible in-app formatting toolbar, table copy/paste (via Milkdown's built-in clipboard + GFM support), and image path copy/paste (selecting an image node and copying writes its absolute path as text; pasting a valid image file path replaces/inserts the image, with relative-path resolution against the document's folder).
+Phase 0-5 complete: a Tauri + Milkdown (Crepe) editor with a native File/Edit/Insert menu (Open / Save / Save As, Undo / Redo, Insert Table / Image), an always-visible in-app formatting toolbar (including Merge Cells / Split Cell), table copy/paste (via Milkdown's built-in clipboard + GFM support), image path copy/paste (selecting an image node and copying writes its absolute path as text; pasting a valid image file path replaces/inserts the image, with relative-path resolution against the document's folder), and tables with merged cells (round-tripped as a raw HTML `<table>` block on save/load, while staying visually and editorially identical to a plain table in the WYSIWYG view).
 Math input and PlantUML integration are not yet implemented (see `03_plan.md` for the implementation plan).
