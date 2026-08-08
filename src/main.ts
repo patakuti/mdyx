@@ -3,6 +3,7 @@ import { listen } from "@tauri-apps/api/event";
 import { setupEditor } from "./editor/setup";
 import { FileManager } from "./file/file-manager";
 import { setupToolbar, runInsertTable, runUndo, runRedo } from "./toolbar/tool-bar";
+import { pasteImageFromClipboard } from "./clipboard/image-paste";
 
 window.addEventListener("DOMContentLoaded", async () => {
   const editorRoot = document.querySelector<HTMLDivElement>("#editor-root");
@@ -19,4 +20,5 @@ window.addEventListener("DOMContentLoaded", async () => {
   await listen("menu-edit-undo", () => runUndo(crepe));
   await listen("menu-edit-redo", () => runRedo(crepe));
   await listen("menu-insert-table", () => runInsertTable(crepe));
+  await listen("menu-insert-image", () => crepe.editor.action((ctx) => pasteImageFromClipboard(ctx)));
 });

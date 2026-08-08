@@ -1,4 +1,5 @@
 mod commands;
+mod path_resolver;
 
 use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder};
 use tauri::{Emitter, Manager};
@@ -8,10 +9,14 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_clipboard_manager::init())
         .invoke_handler(tauri::generate_handler![
             commands::file_io::open_file,
             commands::file_io::save_file,
             commands::file_io::save_file_as,
+            commands::clipboard::read_clipboard_for_image,
+            commands::clipboard::copy_image_path,
+            commands::clipboard::resolve_image_display_path,
         ])
         .setup(|app| {
             let open_item = MenuItemBuilder::with_id("file-open", "Open...")
@@ -37,8 +42,12 @@ pub fn run() {
                 .build()?;
 
             let insert_table_item = MenuItemBuilder::with_id("insert-table", "Table").build(app)?;
+            let insert_image_item =
+                MenuItemBuilder::with_id("insert-image", "Image (from clipboard path)")
+                    .build(app)?;
             let insert_menu = SubmenuBuilder::new(app, "Insert")
                 .item(&insert_table_item)
+                .item(&insert_image_item)
                 .build()?;
 
             let menu = MenuBuilder::new(app)
@@ -59,6 +68,7 @@ pub fn run() {
                     "edit-undo" => Some("menu-edit-undo"),
                     "edit-redo" => Some("menu-edit-redo"),
                     "insert-table" => Some("menu-insert-table"),
+                    "insert-image" => Some("menu-insert-image"),
                     _ => None,
                 };
                 if let Some(event_name) = event_name {
