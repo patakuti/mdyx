@@ -1,4 +1,4 @@
-import { getConfig, saveConfig } from "./config";
+import { getConfig, savePlantumlServerUrl } from "./config";
 import { showToast } from "../ui/toast";
 
 let overlay: HTMLElement | null = null;
@@ -57,7 +57,7 @@ export async function openSettingsPanel(): Promise<void> {
       showToast("Server URL cannot be empty.", "error");
       return;
     }
-    void saveConfig({ plantumlServerUrl: url }).then(close);
+    void savePlantumlServerUrl(url).then(close);
   });
   buttons.appendChild(saveButton);
 

@@ -16,10 +16,12 @@ body {
   height: 100%;
 }
 
+body {
+  display: flex;
+  flex-direction: column;
+}
+
 #toolbar-root {
-  position: sticky;
-  top: 0;
-  z-index: 10;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -27,6 +29,70 @@ body {
   padding: 4px 8px;
   background-color: #e8e8e8;
   border-bottom: 1px solid #cccccc;
+}
+
+#tabbar-root {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  padding: 4px 8px 0;
+  overflow-x: auto;
+  background-color: #e0e0e0;
+  border-bottom: 1px solid #cccccc;
+}
+
+#tabbar-root:empty {
+  display: none;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  font-size: 12px;
+  border: 1px solid #cccccc;
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  background-color: #f0f0f0;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.tab-active {
+  background-color: #ffffff;
+  font-weight: 600;
+}
+
+.tab-title {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tab-close {
+  padding: 0 2px;
+  line-height: 1;
+  color: inherit;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.tab-close:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+#empty-state-root {
+  display: none;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  color: #888888;
+  font-size: 14px;
+  text-align: center;
 }
 
 .toolbar-separator {
@@ -69,7 +135,9 @@ body {
 }
 
 #editor-root {
-  height: calc(100vh - 40px);
+  display: none;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
 }
 
@@ -90,6 +158,29 @@ body {
 
   .toolbar-separator {
     background-color: #444444;
+  }
+
+  #tabbar-root {
+    background-color: #1f1f1f;
+    border-bottom-color: #444444;
+  }
+
+  .tab {
+    border-color: #444444;
+    background-color: #2a2a2a;
+    color: #f6f6f6;
+  }
+
+  .tab-active {
+    background-color: #2f2f2f;
+  }
+
+  .tab-close:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+  }
+
+  #empty-state-root {
+    color: #999999;
   }
 }
 

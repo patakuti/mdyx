@@ -4,8 +4,9 @@ import { tableCellSchema, tableHeaderSchema } from "@milkdown/preset-gfm";
 import "@milkdown/crepe/theme/common/style.css";
 import "@milkdown/crepe/theme/classic.css";
 
-import { imageClipboardPlugin, setupImagePasteInterceptor } from "../clipboard/image-clipboard-plugin";
+import { createImageClipboardPlugin, setupImagePasteInterceptor } from "../clipboard/image-clipboard-plugin";
 import { resolveImageDisplaySrc } from "../clipboard/image-paste";
+import type { ActiveFilePathGetter } from "../clipboard/image-paste";
 import { remarkMathPlugin, mathInlineSchema, mathBlockSchema } from "./nodes/math";
 import { mathInlineView, mathBlockView } from "./nodes/math-view";
 import { nonPlantumlCodeBlockSchema, plantumlSchema } from "./nodes/plantuml";
@@ -33,10 +34,18 @@ const relaxedTableHeaderSchema = tableHeaderSchema.extendSchema((factory) => (ct
   content: "paragraph+",
 }));
 
-export async function setupEditor(root: HTMLElement): Promise<Crepe> {
+// Tabs (Phase 9) mean image paths must resolve relative to whichever tab is
+// currently active, not a single fixed document — see tabs/tab-manager.ts
+// and image-paste.ts's `ActiveFilePathGetter`. `setupEditor` runs before the
+// `TabManager` exists (it needs a `Crepe` instance to wrap), so the caller
+// passes a getter closure instead of a plain value.
+export async function setupEditor(root: HTMLElement, getActiveFilePath: ActiveFilePathGetter): Promise<Crepe> {
   const crepe = new Crepe({
     root,
-    defaultValue: "# MDyX\n\nWYSIWYM Markdown editor.\n",
+    // No placeholder document (Phase 9, 01_requirements.md 3.5節): the app
+    // starts with 0 tabs, so this content is never actually shown — the
+    // first tab created/opened/restored always replaces it immediately.
+    defaultValue: "",
     features: {
       // Crepe's built-in Latex feature (KaTeX + CodeMirror source editing)
       // is on by default and would otherwise compete with our own
@@ -47,11 +56,11 @@ export async function setupEditor(root: HTMLElement): Promise<Crepe> {
     },
     featureConfigs: {
       [Crepe.Feature.ImageBlock]: {
-        proxyDomURL: resolveImageDisplaySrc,
+        proxyDomURL: (src: string) => resolveImageDisplaySrc(src, getActiveFilePath),
       },
     },
   });
-  crepe.editor.use(imageClipboardPlugin);
+  crepe.editor.use(createImageClipboardPlugin(getActiveFilePath));
   crepe.editor.use(relaxedTableCellSchema);
   crepe.editor.use(relaxedTableHeaderSchema);
   crepe.editor.use(remarkMathPlugin);
@@ -65,6 +74,6 @@ export async function setupEditor(root: HTMLElement): Promise<Crepe> {
   crepe.editor.use(plantumlClipboardPlugin);
 
   await crepe.create();
-  setupImagePasteInterceptor(root, crepe);
+  setupImagePasteInterceptor(root, crepe, getActiveFilePath);
   return crepe;
 }
