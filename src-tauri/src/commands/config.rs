@@ -25,6 +25,20 @@ pub struct Config {
     /// Index into `open_tabs` of the tab that was active.
     #[serde(default)]
     pub active_tab_index: Option<usize>,
+    /// Window geometry at last exit, restored on startup (Phase 12,
+    /// 02_design.md 15.2節). `window_x`/`window_y` are the outer position
+    /// (top-left corner including window decorations); `window_width`/
+    /// `window_height` are the inner (content area) size, matching
+    /// `tauri.conf.json`'s `width`/`height` semantics. `None` (e.g. first
+    /// run) means "use the `tauri.conf.json` default".
+    #[serde(default)]
+    pub window_x: Option<i32>,
+    #[serde(default)]
+    pub window_y: Option<i32>,
+    #[serde(default)]
+    pub window_width: Option<u32>,
+    #[serde(default)]
+    pub window_height: Option<u32>,
 }
 
 impl Default for Config {
@@ -34,6 +48,10 @@ impl Default for Config {
             last_opened_dir: None,
             open_tabs: Vec::new(),
             active_tab_index: None,
+            window_x: None,
+            window_y: None,
+            window_width: None,
+            window_height: None,
         }
     }
 }
@@ -84,5 +102,24 @@ pub fn save_open_tabs(
     let mut config = get_config(app.clone())?;
     config.open_tabs = open_tabs;
     config.active_tab_index = active_tab_index;
+    save_config(app, config)
+}
+
+/// Not exposed as a `#[tauri::command]`: called directly from `lib.rs`'s
+/// `CloseRequested` handler, right after the window geometry is read —
+/// unlike `save_open_tabs`, there's no need to wait on the frontend's
+/// unsaved-changes confirmation flow first (02_design.md 15.2節).
+pub fn save_window_state(
+    app: tauri::AppHandle,
+    x: i32,
+    y: i32,
+    width: u32,
+    height: u32,
+) -> Result<(), String> {
+    let mut config = get_config(app.clone())?;
+    config.window_x = Some(x);
+    config.window_y = Some(y);
+    config.window_width = Some(width);
+    config.window_height = Some(height);
     save_config(app, config)
 }

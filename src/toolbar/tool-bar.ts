@@ -219,6 +219,27 @@ const BUTTON_GROUPS: ToolbarButton[][] = [
       shortcut: { code: "Digit3", ctrl: true, alt: true },
       isActive: (ctx) => isHeadingLevel(ctx, 3),
     },
+    {
+      label: "H4",
+      title: "Heading 4 (Ctrl+Alt+4)",
+      action: (c) => c.editor.action((ctx) => toggleHeading(ctx, 4)),
+      shortcut: { code: "Digit4", ctrl: true, alt: true },
+      isActive: (ctx) => isHeadingLevel(ctx, 4),
+    },
+    {
+      label: "H5",
+      title: "Heading 5 (Ctrl+Alt+5)",
+      action: (c) => c.editor.action((ctx) => toggleHeading(ctx, 5)),
+      shortcut: { code: "Digit5", ctrl: true, alt: true },
+      isActive: (ctx) => isHeadingLevel(ctx, 5),
+    },
+    {
+      label: "H6",
+      title: "Heading 6 (Ctrl+Alt+6)",
+      action: (c) => c.editor.action((ctx) => toggleHeading(ctx, 6)),
+      shortcut: { code: "Digit6", ctrl: true, alt: true },
+      isActive: (ctx) => isHeadingLevel(ctx, 6),
+    },
   ],
   [
     {
