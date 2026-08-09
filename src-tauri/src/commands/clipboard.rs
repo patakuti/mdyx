@@ -43,14 +43,14 @@ fn looks_like_url(candidate: &str) -> bool {
             .all(|c| c.is_ascii_alphanumeric() || c == '+' || c == '.' || c == '-')
 }
 
-/// Shared by `read_clipboard_for_image` (candidate = clipboard text) and
-/// `resolve_image_candidate` (candidate = arbitrary text already in hand —
-/// text just extracted from a paste event, or typed into the Insert > Image
-/// dialog, Phase 11) so both paths validate a path/URL identically.
-fn resolve_candidate(
+/// Shared by `resolve_candidate` (image) and `resolve_link_candidate_impl`
+/// (Phase 13, any file) — they differ only in which `path_resolver`
+/// function decides whether a non-URL candidate resolves to a real file.
+fn resolve_candidate_with(
     candidate: &str,
     current_file_path: &Option<String>,
     app: &tauri::AppHandle,
+    resolve: fn(&str, Option<&str>, Option<&Path>) -> Option<path_resolver::ResolvedPath>,
 ) -> ClipboardPasteContent {
     let trimmed = candidate.trim();
     if trimmed.is_empty() {
@@ -66,7 +66,7 @@ fn resolve_candidate(
 
     let base_dir = base_dir_of(current_file_path);
     let home_dir = app.path().home_dir().ok();
-    match path_resolver::resolve_for_paste(trimmed, base_dir.as_deref(), home_dir.as_deref()) {
+    match resolve(trimmed, base_dir.as_deref(), home_dir.as_deref()) {
         Some(resolved) => ClipboardPasteContent::Path {
             path: resolved.path,
             is_relative: resolved.is_relative,
@@ -74,6 +74,18 @@ fn resolve_candidate(
         },
         None => ClipboardPasteContent::None,
     }
+}
+
+/// Shared by `read_clipboard_for_image` (candidate = clipboard text) and
+/// `resolve_image_candidate` (candidate = arbitrary text already in hand —
+/// text just extracted from a paste event, or typed into the Insert > Image
+/// dialog, Phase 11) so both paths validate a path/URL identically.
+fn resolve_candidate(
+    candidate: &str,
+    current_file_path: &Option<String>,
+    app: &tauri::AppHandle,
+) -> ClipboardPasteContent {
+    resolve_candidate_with(candidate, current_file_path, app, path_resolver::resolve_for_paste)
 }
 
 /// Inspect the clipboard for an image paste: a text file path takes
@@ -112,6 +124,20 @@ pub fn resolve_image_candidate(
     current_file_path: Option<String>,
 ) -> ClipboardPasteContent {
     resolve_candidate(&candidate, &current_file_path, &app)
+}
+
+/// Validates the URL/path field of the Insert > Link dialog
+/// (`insert-link-dialog.ts`, Phase 13, 01_requirements.md 3.12節). Same
+/// URL-or-path branching as `resolve_image_candidate`, but any existing
+/// file resolves (`path_resolver::resolve_for_link`), not just images — a
+/// link can point to anything.
+#[tauri::command]
+pub fn resolve_link_candidate(
+    app: tauri::AppHandle,
+    candidate: String,
+    current_file_path: Option<String>,
+) -> ClipboardPasteContent {
+    resolve_candidate_with(&candidate, &current_file_path, &app, path_resolver::resolve_for_link)
 }
 
 /// Resolve a possibly-relative image `src` (as stored in the document) to an

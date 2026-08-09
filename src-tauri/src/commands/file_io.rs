@@ -91,6 +91,26 @@ pub async fn pick_image_file(
     Ok(Some(path.to_string_lossy().into_owned()))
 }
 
+/// Same as `pick_image_file`, but for Insert > Link's "Browse..." button
+/// (Phase 13, 01_requirements.md 3.12節): no extension filter, since a link
+/// can point to any file type.
+#[tauri::command]
+pub async fn pick_link_file(
+    app: tauri::AppHandle,
+    initial_dir: Option<String>,
+) -> Result<Option<String>, String> {
+    let mut dialog = app.dialog().file();
+    if let Some(dir) = initial_dir.map(PathBuf::from).filter(|d| d.is_dir()) {
+        dialog = dialog.set_directory(dir);
+    }
+    let file_path = dialog.blocking_pick_file();
+    let Some(file_path) = file_path else {
+        return Ok(None);
+    };
+    let path = file_path.into_path().map_err(|e| e.to_string())?;
+    Ok(Some(path.to_string_lossy().into_owned()))
+}
+
 #[tauri::command]
 pub async fn save_file_as(app: tauri::AppHandle, content: String) -> Result<Option<String>, String> {
     let mut dialog = app.dialog().file().add_filter("Markdown", &["md", "markdown"]);

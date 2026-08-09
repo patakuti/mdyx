@@ -44,6 +44,12 @@ MDyX lets you edit plain Markdown files with a WYSIWYM ("What You See Is What Yo
 - **Update**: select the diagram and paste new source to re-render it.
 - **External tools**: copying a selected diagram gives back its PlantUML source, to edit in a dedicated PlantUML editor (e.g. [Blockly PlantUML Editor](https://github.com/patakuti/blockly-plantuml-editor)) and paste back in. Diagrams are rendered by a PlantUML server, configurable in Settings.
 
+### Links
+
+- **Insert**: Insert > Link (`Ctrl/Cmd+K`, menu or toolbar) opens a dialog for the link text and a URL or file path (with a Browse button, like Insert > Image). Selecting text first pre-fills the text field. Or, select text and click the link icon in the floating toolbar that appears.
+- **Update**: click an existing link to edit or remove it from the floating toolbar's tooltip.
+- **External tools**: not applicable — links are edited directly in MDyX.
+
 ## Getting Started
 
 Prerequisites: [Node.js](https://nodejs.org/) with npm, and [Rust](https://www.rust-lang.org/) (cargo).

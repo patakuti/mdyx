@@ -8,6 +8,8 @@ import type { MarkType, NodeType } from "@milkdown/prose/model";
 import { mathInlineSchema, insertMathNode } from "../editor/nodes/math";
 import { insertPlantumlNodeFromClipboard } from "../editor/nodes/plantuml";
 import { insertTableFromClipboard } from "../clipboard/table-insert";
+import { showInsertLinkDialog } from "../editor/insert-link-dialog";
+import type { ActiveFilePathGetter } from "../clipboard/image-paste";
 import { undoCommand, redoCommand } from "@milkdown/plugin-history";
 import {
   toggleStrongCommand,
@@ -143,7 +145,7 @@ interface ToolbarButton {
   label: string;
   title: string;
   className?: string;
-  action: (crepe: Crepe) => void;
+  action: (crepe: Crepe, getActiveFilePath: ActiveFilePathGetter) => void;
   shortcut?: ToolbarShortcut;
   /// Whether the current cursor/selection is "inside" this button's format
   /// (01_requirements.md 3.6節). Omitted for one-shot actions (Undo, Insert
@@ -296,6 +298,12 @@ const BUTTON_GROUPS: ToolbarButton[][] = [
       className: "tb-mono",
       action: (c) => c.editor.action((ctx) => void insertPlantumlNodeFromClipboard(ctx.get(editorViewCtx))),
     },
+    {
+      label: "Link",
+      title: "Insert Link (Ctrl+K)",
+      action: (c, getActiveFilePath) => c.editor.action((ctx) => showInsertLinkDialog(ctx, getActiveFilePath)),
+      shortcut: { code: "KeyK", ctrl: true },
+    },
   ],
 ];
 
@@ -313,7 +321,11 @@ function matchesShortcut(event: KeyboardEvent, shortcut: ToolbarShortcut): boole
 /// 02_design.md 13.2節) to refresh which toggle buttons look "pressed".
 export type ToolbarActiveStateUpdater = () => void;
 
-export function setupToolbar(container: HTMLElement, crepe: Crepe): ToolbarActiveStateUpdater {
+export function setupToolbar(
+  container: HTMLElement,
+  crepe: Crepe,
+  getActiveFilePath: ActiveFilePathGetter
+): ToolbarActiveStateUpdater {
   const toggleButtons: { el: HTMLButtonElement; isActive: (ctx: Ctx) => boolean }[] = [];
 
   BUTTON_GROUPS.forEach((group, index) => {
@@ -330,7 +342,7 @@ export function setupToolbar(container: HTMLElement, crepe: Crepe): ToolbarActiv
       el.className = ["toolbar-button", button.className].filter(Boolean).join(" ");
       // Prevent the editor from losing focus/selection before the click fires.
       el.addEventListener("mousedown", (event) => event.preventDefault());
-      el.addEventListener("click", () => button.action(crepe));
+      el.addEventListener("click", () => button.action(crepe, getActiveFilePath));
       container.appendChild(el);
       if (button.isActive) toggleButtons.push({ el, isActive: button.isActive });
     }
@@ -341,7 +353,7 @@ export function setupToolbar(container: HTMLElement, crepe: Crepe): ToolbarActiv
       for (const button of group) {
         if (!button.shortcut || !matchesShortcut(event, button.shortcut)) continue;
         event.preventDefault();
-        button.action(crepe);
+        button.action(crepe, getActiveFilePath);
         return;
       }
     }

@@ -24,8 +24,10 @@ pub fn run() {
             commands::file_io::save_file_as,
             commands::file_io::read_file,
             commands::file_io::pick_image_file,
+            commands::file_io::pick_link_file,
             commands::clipboard::read_clipboard_for_image,
             commands::clipboard::resolve_image_candidate,
+            commands::clipboard::resolve_link_candidate,
             commands::clipboard::copy_image_path,
             commands::clipboard::resolve_image_display_path,
             commands::clipboard::write_clipboard_text,
@@ -83,10 +85,14 @@ pub fn run() {
             let insert_plantuml_item = MenuItemBuilder::with_id("insert-plantuml", "&PlantUML Diagram")
                 .accelerator("CmdOrCtrl+Alt+U")
                 .build(app)?;
+            let insert_link_item = MenuItemBuilder::with_id("insert-link", "&Link...")
+                .accelerator("CmdOrCtrl+K")
+                .build(app)?;
             let insert_menu = SubmenuBuilder::new(app, "&Insert")
                 .item(&insert_table_item)
                 .item(&insert_image_item)
                 .item(&insert_plantuml_item)
+                .item(&insert_link_item)
                 .build()?;
 
             let settings_plantuml_server_item =
@@ -126,6 +132,7 @@ pub fn run() {
                     "insert-table" => Some("menu-insert-table"),
                     "insert-image" => Some("menu-insert-image"),
                     "insert-plantuml" => Some("menu-insert-plantuml"),
+                    "insert-link" => Some("menu-insert-link"),
                     "settings-plantuml-server" => Some("menu-settings-plantuml-server"),
                     _ => None,
                 };
