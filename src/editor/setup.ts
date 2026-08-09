@@ -1,4 +1,5 @@
 import { Crepe } from "@milkdown/crepe";
+import { editorViewCtx } from "@milkdown/core";
 import { linkSchema } from "@milkdown/preset-commonmark";
 import { tableCellSchema, tableHeaderSchema } from "@milkdown/preset-gfm";
 import { $prose } from "@milkdown/utils";
@@ -152,5 +153,22 @@ export async function setupEditor(
 
   await crepe.create();
   setupImagePasteInterceptor(root, crepe, getActiveFilePath);
+
+  // `view.dom` is ProseMirror's own editable element (Milkdown/Crepe's
+  // `.ProseMirror`), whose direct children are exactly the same top-level
+  // doc nodes `DOMSerializer.serializeFragment` produces for Export
+  // (html-export.ts) — tagging it with the class the theme CSS's selectors
+  // are written against (theme/theme-style.ts, 01_requirements.md 10.3節)
+  // is what makes the live editor and the exported HTML share one theme.
+  //
+  // Also tagged `markdown-body` (measured against a real markdown-proxy
+  // theme file, ~/.config/markdown-proxy/themes/dark.css, during Phase 15
+  // review: only its bare `body {...}` rule took effect, since every other
+  // rule is written as `.markdown-body h1`/`.markdown-body pre`/etc. — that
+  // project's own class name convention) so a markdown-proxy theme file can
+  // be pointed at directly as a MDyX custom theme (Settings > Theme...)
+  // with no edits, not just MDyX's own `.mdyx-content`-scoped built-ins.
+  crepe.editor.action((ctx) => ctx.get(editorViewCtx).dom.classList.add("mdyx-content", "markdown-body"));
+
   return crepe;
 }

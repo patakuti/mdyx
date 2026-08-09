@@ -382,6 +382,14 @@ math-field::part(menu-toggle) {
   font-size: 13px;
 }
 
+.settings-section-label {
+  margin-top: 16px;
+}
+
+.settings-panel select.settings-input {
+  cursor: pointer;
+}
+
 .settings-input {
   box-sizing: border-box;
   width: 100%;

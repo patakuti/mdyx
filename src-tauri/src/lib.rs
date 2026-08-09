@@ -25,6 +25,7 @@ pub fn run() {
             commands::file_io::read_file,
             commands::file_io::pick_image_file,
             commands::file_io::pick_link_file,
+            commands::file_io::pick_css_file,
             commands::clipboard::read_clipboard_for_image,
             commands::clipboard::resolve_image_candidate,
             commands::clipboard::resolve_link_candidate,
@@ -34,8 +35,11 @@ pub fn run() {
             commands::clipboard::write_clipboard_table,
             commands::clipboard::read_clipboard_text,
             commands::plantuml::render_plantuml,
+            commands::export::export_html,
+            commands::export::write_temp_html,
             commands::config::get_config,
             commands::config::save_plantuml_server_url,
+            commands::config::save_theme,
             commands::config::save_open_tabs,
             confirm_close,
         ])
@@ -95,17 +99,28 @@ pub fn run() {
                 .item(&insert_link_item)
                 .build()?;
 
+            let export_html_item = MenuItemBuilder::with_id("export-html", "Export to &HTML...").build(app)?;
+            let export_open_browser_item =
+                MenuItemBuilder::with_id("export-open-browser", "&Open in Browser").build(app)?;
+            let export_menu = SubmenuBuilder::new(app, "E&xport")
+                .item(&export_html_item)
+                .item(&export_open_browser_item)
+                .build()?;
+
             let settings_plantuml_server_item =
                 MenuItemBuilder::with_id("settings-plantuml-server", "&PlantUML Server...")
                     .build(app)?;
+            let settings_theme_item = MenuItemBuilder::with_id("settings-theme", "&Theme...").build(app)?;
             let settings_menu = SubmenuBuilder::new(app, "&Settings")
                 .item(&settings_plantuml_server_item)
+                .item(&settings_theme_item)
                 .build()?;
 
             let menu = MenuBuilder::new(app)
                 .item(&file_menu)
                 .item(&edit_menu)
                 .item(&insert_menu)
+                .item(&export_menu)
                 .item(&settings_menu)
                 .build()?;
             app.set_menu(menu)?;
@@ -133,7 +148,10 @@ pub fn run() {
                     "insert-image" => Some("menu-insert-image"),
                     "insert-plantuml" => Some("menu-insert-plantuml"),
                     "insert-link" => Some("menu-insert-link"),
+                    "export-html" => Some("menu-export-html"),
+                    "export-open-browser" => Some("menu-export-open-browser"),
                     "settings-plantuml-server" => Some("menu-settings-plantuml-server"),
+                    "settings-theme" => Some("menu-settings-theme"),
                     _ => None,
                 };
                 if let Some(event_name) = event_name {

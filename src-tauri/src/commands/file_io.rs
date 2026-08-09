@@ -15,8 +15,10 @@ pub struct OpenedFile {
 /// Directory to pre-select in the Open/Save As dialog, from the last
 /// successfully opened/saved file's directory (01_requirements.md 3.4節).
 /// Falls back to `None` (OS default) if unset or no longer present, e.g. a
-/// removed/unmounted drive.
-fn last_opened_dir(app: &tauri::AppHandle) -> Option<PathBuf> {
+/// removed/unmounted drive. `pub(crate)` so `export.rs`'s Export to HTML
+/// save dialog can offer the same starting directory (Phase 15) without
+/// duplicating this lookup.
+pub(crate) fn last_opened_dir(app: &tauri::AppHandle) -> Option<PathBuf> {
     let dir = config::get_config(app.clone()).ok()?.last_opened_dir?;
     let path = PathBuf::from(dir);
     path.is_dir().then_some(path)
@@ -109,6 +111,46 @@ pub async fn pick_link_file(
     };
     let path = file_path.into_path().map_err(|e| e.to_string())?;
     Ok(Some(path.to_string_lossy().into_owned()))
+}
+
+/// Backs the Theme setting's "Browse..." button (settings-panel.ts, Phase
+/// 15, 02_design.md 18.2節). Unlike `pick_image_file`/`pick_link_file`
+/// above, this *does* remember its own starting directory across calls
+/// (`last_css_dir`, config.rs) rather than deriving one from the active
+/// tab each time — a CSS theme file has no natural relationship to
+/// whichever Markdown file happens to be open, so "wherever I last went
+/// looking for one" is the more useful memory here (01_requirements.md
+/// 10.6節, requested directly after the rest of Export/Theme shipped).
+#[tauri::command]
+pub async fn pick_css_file(app: tauri::AppHandle) -> Result<Option<String>, String> {
+    let mut dialog = app.dialog().file().add_filter("CSS", &["css"]);
+    if let Some(dir) = last_css_dir(&app) {
+        dialog = dialog.set_directory(dir);
+    }
+    let file_path = dialog.blocking_pick_file();
+    let Some(file_path) = file_path else {
+        return Ok(None);
+    };
+    let path = file_path.into_path().map_err(|e| e.to_string())?;
+    remember_css_dir(&app, &path);
+    Ok(Some(path.to_string_lossy().into_owned()))
+}
+
+fn last_css_dir(app: &tauri::AppHandle) -> Option<PathBuf> {
+    let dir = config::get_config(app.clone()).ok()?.last_css_dir?;
+    let path = PathBuf::from(dir);
+    path.is_dir().then_some(path)
+}
+
+fn remember_css_dir(app: &tauri::AppHandle, file_path: &Path) {
+    let Some(dir) = file_path.parent() else {
+        return;
+    };
+    let Ok(mut cfg) = config::get_config(app.clone()) else {
+        return;
+    };
+    cfg.last_css_dir = Some(dir.to_string_lossy().into_owned());
+    let _ = config::save_config(app.clone(), cfg);
 }
 
 #[tauri::command]
