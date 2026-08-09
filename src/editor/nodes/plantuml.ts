@@ -15,6 +15,27 @@ export const DEFAULT_PLANTUML_SOURCE = "@startuml\n\n@enduml";
 /// PlantUML Diagram's own clipboard check below.
 export const PLANTUML_SOURCE_PATTERN = /^@startuml[\s\S]*@enduml$/;
 
+/// blockly-plantuml-editor (README.md's linked example external tool) copies
+/// its diagrams wrapped in a ` ```plantuml ` fenced code block rather than
+/// bare source. Strips that fence, if present, so `extractPlantumlSource`
+/// below can still recognize the paste (02_design.md 17章).
+const PLANTUML_FENCE_PATTERN = /^```plantuml\s*\r?\n([\s\S]*?)\r?\n```\s*$/i;
+
+/// Extracts a PlantUML source from pasted/clipboard text, whether it's bare
+/// `@startuml`〜`@enduml` or that same block wrapped in a ` ```plantuml `
+/// fence (02_design.md 17章) — used by both the paste auto-detection
+/// (plantuml-clipboard-plugin.ts) and Insert > PlantUML Diagram's clipboard
+/// check below. Returns `null` if neither form matches. Copying a `plantuml`
+/// node (plantuml-clipboard-plugin.ts's copy handler) is unaffected: it
+/// keeps writing bare source, not a fenced one.
+export function extractPlantumlSource(text: string): string | null {
+  const trimmed = text.trim();
+  if (PLANTUML_SOURCE_PATTERN.test(trimmed)) return trimmed;
+  const fenceMatch = PLANTUML_FENCE_PATTERN.exec(trimmed);
+  const unfenced = fenceMatch?.[1].trim();
+  return unfenced && PLANTUML_SOURCE_PATTERN.test(unfenced) ? unfenced : null;
+}
+
 /// Crepe's default `code_block` node otherwise claims every mdast `code`
 /// node unconditionally (parseMarkdown.match only checks `type === "code"`,
 /// see @milkdown/preset-commonmark/src/node/code-block.ts), so without this
@@ -128,7 +149,6 @@ export function insertPlantumlNode(view: EditorView, source = DEFAULT_PLANTUML_S
 /// a blank placeholder.
 export async function insertPlantumlNodeFromClipboard(view: EditorView): Promise<void> {
   const text = await invoke<string | null>("read_clipboard_text");
-  const trimmed = text?.trim();
-  const source = trimmed && PLANTUML_SOURCE_PATTERN.test(trimmed) ? trimmed : undefined;
+  const source = text ? (extractPlantumlSource(text) ?? undefined) : undefined;
   insertPlantumlNode(view, source);
 }
