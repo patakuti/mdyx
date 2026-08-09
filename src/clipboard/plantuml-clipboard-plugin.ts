@@ -3,7 +3,7 @@ import type { Ctx } from "@milkdown/ctx";
 import { editorViewCtx } from "@milkdown/core";
 import { NodeSelection, Plugin } from "@milkdown/prose/state";
 
-import { plantumlSchema, insertPlantumlNode, PLANTUML_SOURCE_PATTERN } from "../editor/nodes/plantuml";
+import { plantumlSchema, insertPlantumlNode, extractPlantumlSource } from "../editor/nodes/plantuml";
 import { prosePrepend } from "./prose-prepend";
 
 function isPlantumlNodeSelected(ctx: Ctx): boolean {
@@ -18,11 +18,12 @@ function isPlantumlNodeSelected(ctx: Ctx): boolean {
 /// image-clipboard-plugin.ts's copy override for images.
 ///
 /// Paste auto-detects a PlantUML source regardless of what's selected (any
-/// pasted text that's fully an `@startuml`〜`@enduml` block is treated as
-/// PlantUML) via ProseMirror's `handlePaste` prop — this was the original
-/// model for Phase 11's table/image auto-detect paste too
-/// (`table-clipboard-plugin.ts`/`image-clipboard-plugin.ts`, 02_design.md
-/// 14.1節/14.2節).
+/// pasted text that's fully an `@startuml`〜`@enduml` block, optionally
+/// wrapped in a ` ```plantuml ` fence — `extractPlantumlSource`,
+/// 02_design.md 17章 — is treated as PlantUML) via ProseMirror's
+/// `handlePaste` prop — this was the original model for Phase 11's
+/// table/image auto-detect paste too (`table-clipboard-plugin.ts`/
+/// `image-clipboard-plugin.ts`, 02_design.md 14.1節/14.2節).
 ///
 /// This is NOT the same as reading `event.clipboardData` from a plain DOM
 /// `paste` listener — 02_design.md 4.2節 already found that unreliable in
@@ -49,14 +50,14 @@ export const plantumlClipboardPlugin = prosePrepend((ctx) => {
       },
       handlePaste: (view, event) => {
         const text = event.clipboardData?.getData("text/plain");
-        const trimmed = text?.trim();
-        if (!trimmed || !PLANTUML_SOURCE_PATTERN.test(trimmed)) return false;
+        const source = text ? extractPlantumlSource(text) : null;
+        if (!source) return false;
 
         const { selection } = view.state;
         if (selection instanceof NodeSelection && selection.node.type === plantumlSchema.type(ctx)) {
-          view.dispatch(view.state.tr.setNodeAttribute(selection.from, "source", trimmed));
+          view.dispatch(view.state.tr.setNodeAttribute(selection.from, "source", source));
         } else {
-          insertPlantumlNode(view, trimmed);
+          insertPlantumlNode(view, source);
         }
         return true;
       },
