@@ -4,6 +4,7 @@ use serde::Serialize;
 use tauri_plugin_dialog::DialogExt;
 
 use super::config;
+use crate::path_resolver::IMAGE_EXTENSIONS;
 
 #[derive(Serialize)]
 pub struct OpenedFile {
@@ -65,6 +66,29 @@ pub fn save_file(path: String, content: String) -> Result<(), String> {
 #[tauri::command]
 pub fn read_file(path: String) -> Result<String, String> {
     std::fs::read_to_string(&path).map_err(|e| e.to_string())
+}
+
+/// Backs the Insert > Image dialog's "Browse..." button (insert-image-
+/// dialog.ts, 02_design.md 14.3節). Deliberately independent of
+/// `last_opened_dir` (3.4節, Markdown files' own "last opened" memory):
+/// `initial_dir` is the *active tab's* folder, passed in fresh by the
+/// caller each time, and picking an image here never updates
+/// `last_opened_dir` — the two "starting directory" concepts shouldn't mix.
+#[tauri::command]
+pub async fn pick_image_file(
+    app: tauri::AppHandle,
+    initial_dir: Option<String>,
+) -> Result<Option<String>, String> {
+    let mut dialog = app.dialog().file().add_filter("Images", &IMAGE_EXTENSIONS);
+    if let Some(dir) = initial_dir.map(PathBuf::from).filter(|d| d.is_dir()) {
+        dialog = dialog.set_directory(dir);
+    }
+    let file_path = dialog.blocking_pick_file();
+    let Some(file_path) = file_path else {
+        return Ok(None);
+    };
+    let path = file_path.into_path().map_err(|e| e.to_string())?;
+    Ok(Some(path.to_string_lossy().into_owned()))
 }
 
 #[tauri::command]

@@ -6,7 +6,7 @@ import { setupEditor } from "./editor/setup";
 import { TabManager } from "./tabs/tab-manager";
 import { setupTabBar } from "./tabs/tab-bar";
 import { setupToolbar, runInsertTable, runUndo, runRedo } from "./toolbar/tool-bar";
-import { pasteImageFromClipboard } from "./clipboard/image-paste";
+import { insertImageFromClipboardOrDialog } from "./clipboard/insert-image-dialog";
 import { insertPlantumlNodeFromClipboard } from "./editor/nodes/plantuml";
 import { openSettingsPanel } from "./settings/settings-panel";
 import { getConfig } from "./settings/config";
@@ -56,7 +56,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   await listen("menu-edit-redo", () => runRedo(crepe));
   await listen("menu-insert-table", () => runInsertTable(crepe));
   await listen("menu-insert-image", () =>
-    crepe.editor.action((ctx) => pasteImageFromClipboard(ctx, () => activeFilePath))
+    crepe.editor.action((ctx) => void insertImageFromClipboardOrDialog(ctx, () => activeFilePath))
   );
   await listen("menu-insert-plantuml", () =>
     crepe.editor.action((ctx) => void insertPlantumlNodeFromClipboard(ctx.get(editorViewCtx)))

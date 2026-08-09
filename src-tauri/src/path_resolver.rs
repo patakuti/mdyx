@@ -1,6 +1,9 @@
 use std::path::{Path, PathBuf};
 
-const IMAGE_EXTENSIONS: [&str; 7] = ["png", "jpg", "jpeg", "gif", "webp", "bmp", "svg"];
+/// Also used by `commands::file_io::pick_image_file` (Phase 11) to filter
+/// the native file picker to the same set of extensions this module treats
+/// as an image.
+pub const IMAGE_EXTENSIONS: [&str; 7] = ["png", "jpg", "jpeg", "gif", "webp", "bmp", "svg"];
 
 pub struct ResolvedPath {
     pub path: String,
