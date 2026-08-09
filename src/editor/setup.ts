@@ -7,7 +7,11 @@ import type { EditorView } from "@milkdown/prose/view";
 import "@milkdown/crepe/theme/common/style.css";
 import "@milkdown/crepe/theme/classic.css";
 
-import { createImageClipboardPlugin, setupImagePasteInterceptor } from "../clipboard/image-clipboard-plugin";
+import {
+  createImageClipboardPlugin,
+  createGeneralImagePastePlugin,
+  setupImagePasteInterceptor,
+} from "../clipboard/image-clipboard-plugin";
 import { resolveImageDisplaySrc } from "../clipboard/image-paste";
 import type { ActiveFilePathGetter } from "../clipboard/image-paste";
 import { remarkMathPlugin, mathInlineSchema, mathBlockSchema } from "./nodes/math";
@@ -15,6 +19,7 @@ import { mathInlineView, mathBlockView } from "./nodes/math-view";
 import { nonPlantumlCodeBlockSchema, plantumlSchema } from "./nodes/plantuml";
 import { plantumlView } from "./nodes/plantuml-view";
 import { plantumlClipboardPlugin } from "../clipboard/plantuml-clipboard-plugin";
+import { tableClipboardPlugin } from "../clipboard/table-clipboard-plugin";
 
 // Milkdown's built-in table cell schema allows exactly one paragraph per
 // cell. `mergeCells` (prosemirror-tables, wired to the toolbar's Merge
@@ -89,6 +94,8 @@ export async function setupEditor(
     },
   });
   crepe.editor.use(createImageClipboardPlugin(getActiveFilePath));
+  crepe.editor.use(createGeneralImagePastePlugin(getActiveFilePath));
+  crepe.editor.use(tableClipboardPlugin);
   crepe.editor.use(relaxedTableCellSchema);
   crepe.editor.use(relaxedTableHeaderSchema);
   crepe.editor.use(remarkMathPlugin);

@@ -8,7 +8,7 @@ import { insertPoint } from "@milkdown/prose/transform";
 import type { Node as PMNode } from "@milkdown/prose/model";
 import type { EditorView } from "@milkdown/prose/view";
 
-import { htmlToTableNode, markdownToTableNode } from "../editor/markdown-io/html-table";
+import { htmlToTableNode, textToTableNode } from "../editor/markdown-io/html-table";
 
 const EMPTY_TABLE_ROWS = 2;
 const EMPTY_TABLE_COLS = 2;
@@ -53,7 +53,7 @@ async function readPlainText(): Promise<string | null> {
   return invoke<string | null>("read_clipboard_text");
 }
 
-function insertTableNode(view: EditorView, node: PMNode): void {
+export function insertTableNode(view: EditorView, node: PMNode): void {
   const tr = view.state.tr;
   if (!tr.selection.empty) tr.deleteSelection();
 
@@ -66,8 +66,10 @@ function insertTableNode(view: EditorView, node: PMNode): void {
 /// Insert > Table diagram / the toolbar's "⊞" button: checks the clipboard
 /// for a table first and uses it if present, otherwise falls back to an
 /// empty 2x2 table — mirroring Insert > Image / Insert > PlantUML Diagram
-/// (01_requirements.md 5.3節, 02_design.md 4.6節). Tries, in order: an HTML
-/// `<table>`, then a `text/plain` GFM pipe-table, then the empty-table
+/// (01_requirements.md 5.3節, 02_design.md 4.6節). Tries, in order: a
+/// `text/html` `<table>`, then whatever `textToTableNode` can make of
+/// `text/plain` (literal HTML-as-text, e.g. round-tripped through a
+/// plain-text-only intermediary — or GFM pipe syntax), then the empty-table
 /// fallback.
 export async function insertTableFromClipboard(ctx: Ctx): Promise<void> {
   const htmlTable = await readHtmlTable(ctx);
@@ -77,7 +79,7 @@ export async function insertTableFromClipboard(ctx: Ctx): Promise<void> {
   }
 
   const text = await readPlainText();
-  const table = text ? markdownToTableNode(ctx, text) : null;
+  const table = text ? textToTableNode(ctx, text) : null;
   if (table) {
     insertTableNode(ctx.get(editorViewCtx), table);
     return;

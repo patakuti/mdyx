@@ -407,6 +407,30 @@ math-field::part(menu-toggle) {
   color: inherit;
 }
 
+.insert-image-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.insert-image-input-row .settings-input {
+  flex: 1;
+  width: auto;
+}
+
+.insert-image-input-row button {
+  padding: 6px 10px;
+  border: 1px solid #999999;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  color: inherit;
+  white-space: nowrap;
+}
+
+.insert-image-error {
+  color: #c0392b;
+}
+
 @media (prefers-color-scheme: dark) {
   .settings-panel {
     background-color: #2f2f2f;
@@ -421,5 +445,13 @@ math-field::part(menu-toggle) {
 
   .settings-buttons button {
     border-color: #666666;
+  }
+
+  .insert-image-input-row button {
+    border-color: #666666;
+  }
+
+  .insert-image-error {
+    color: #e57368;
   }
 }
