@@ -36,6 +36,34 @@ fn expand_home(candidate: &str, home_dir: Option<&Path>) -> PathBuf {
     }
 }
 
+/// Scope `candidate_path` (already confirmed to exist) against `base_dir`:
+/// relative if it's inside, absolute + `out_of_scope` if not, or absolute
+/// as-is if there's no `base_dir` (unsaved document, 01_requirements.md 8).
+/// Shared by `resolve_for_paste` (image) and `resolve_for_link` (Phase 13,
+/// 3.12節) — they differ only in which file types they accept.
+fn resolve_scoped(candidate_path: &Path, base_dir: Option<&str>) -> ResolvedPath {
+    let Some(base_dir) = base_dir else {
+        return ResolvedPath {
+            path: candidate_path.to_string_lossy().into_owned(),
+            is_relative: false,
+            out_of_scope: false,
+        };
+    };
+
+    match candidate_path.strip_prefix(base_dir) {
+        Ok(rel) => ResolvedPath {
+            path: rel.to_string_lossy().into_owned(),
+            is_relative: true,
+            out_of_scope: false,
+        },
+        Err(_) => ResolvedPath {
+            path: candidate_path.to_string_lossy().into_owned(),
+            is_relative: false,
+            out_of_scope: true,
+        },
+    }
+}
+
 /// Resolve a clipboard text candidate into an image path for pasting.
 /// Returns `None` if the candidate isn't an existing image file.
 ///
@@ -54,27 +82,23 @@ pub fn resolve_for_paste(
     if !candidate_path.is_file() || !has_image_extension(candidate_path) {
         return None;
     }
+    Some(resolve_scoped(candidate_path, base_dir))
+}
 
-    let Some(base_dir) = base_dir else {
-        return Some(ResolvedPath {
-            path: candidate_path.to_string_lossy().into_owned(),
-            is_relative: false,
-            out_of_scope: false,
-        });
-    };
-
-    match candidate_path.strip_prefix(base_dir) {
-        Ok(rel) => Some(ResolvedPath {
-            path: rel.to_string_lossy().into_owned(),
-            is_relative: true,
-            out_of_scope: false,
-        }),
-        Err(_) => Some(ResolvedPath {
-            path: candidate_path.to_string_lossy().into_owned(),
-            is_relative: false,
-            out_of_scope: true,
-        }),
+/// Same scoping/relative-path logic as `resolve_for_paste`, but for Insert >
+/// Link's file-path field (Phase 13, 01_requirements.md 3.12節): any
+/// existing file, not just images — a link can point to anything.
+pub fn resolve_for_link(
+    candidate: &str,
+    base_dir: Option<&str>,
+    home_dir: Option<&Path>,
+) -> Option<ResolvedPath> {
+    let candidate_path = expand_home(candidate, home_dir);
+    let candidate_path = candidate_path.as_path();
+    if !candidate_path.is_file() {
+        return None;
     }
+    Some(resolve_scoped(candidate_path, base_dir))
 }
 
 /// Resolve an image node's `src` (possibly relative) into an absolute path

@@ -1,4 +1,5 @@
 import { Crepe } from "@milkdown/crepe";
+import { linkSchema } from "@milkdown/preset-commonmark";
 import { tableCellSchema, tableHeaderSchema } from "@milkdown/preset-gfm";
 import { $prose } from "@milkdown/utils";
 import { Plugin } from "@milkdown/prose/state";
@@ -40,6 +41,45 @@ const relaxedTableCellSchema = tableCellSchema.extendSchema((factory) => (ctx) =
 const relaxedTableHeaderSchema = tableHeaderSchema.extendSchema((factory) => (ctx) => ({
   ...factory(ctx),
   content: "paragraph+",
+}));
+
+// The `link` mark is the one Milkdown mark schema where it's safe to
+// override `inclusive: false` (the ProseMirror `MarkSpec` field controlling
+// whether a cursor positioned right at the end of a marked run counts as
+// "inside" it for purposes of what a freshly typed character inherits —
+// `true` by default, and none of Milkdown's presets override it).
+//
+// Bold/Italic/Strikethrough/Inline Code deliberately keep the default
+// (confirmed by testing the same override on them and reverting it, see
+// 02_design.md 16.4節 for the full investigation): clicking one of those
+// toolbar buttons with an empty selection, then typing several characters,
+// relies on this exact `inclusive: true` default for every character after
+// the first. `toggleMark` on an empty selection only sets
+// `state.storedMarks` for the *next* transaction (`tr.addStoredMark`) —
+// inserting that first character consumes it, since `Transaction.addStep`
+// (called by any doc-changing step, confirmed by reading
+// `prosemirror-state`'s `Transaction.addStep`) resets `storedMarks` to
+// `null` afterward. Every character after the first is therefore governed
+// by the *position-based* fallback in `Transaction.insertText`
+// (`$from.marks()`), which only continues the mark if it's inclusive.
+// Overriding `inclusive: false` for these marks reproduces exactly this
+// symptom: only the first typed character came out marked (e.g. `**B**old
+// text` instead of `**Bold text**`).
+//
+// Links don't have this "toggle then type multiple characters" flow at all
+// in this app — a link is always applied to already-existing text (select
+// it, use Crepe's floating-toolbar link icon) or built as a complete unit
+// via Insert > Link's dialog (`insert-link-dialog.ts`, 02_design.md 16章),
+// never composed character-by-character from an empty cursor. So
+// `inclusive: false` has no such downside for `link`, while fixing the real
+// bug it was added for: continuing to type right after a link (via a click,
+// an arrow key, or — before this schema fix — right after Insert > Link's
+// own cursor placement) no longer silently extends the link onto
+// unconnected text (reported via real-machine testing: typing immediately
+// after an inserted link picked up its `href`).
+const nonInclusiveLinkSchema = linkSchema.extendSchema((factory) => (ctx) => ({
+  ...factory(ctx),
+  inclusive: false,
 }));
 
 // Notifies `onEditorUpdate` after every editor update — a real edit, a
@@ -98,6 +138,7 @@ export async function setupEditor(
   crepe.editor.use(tableClipboardPlugin);
   crepe.editor.use(relaxedTableCellSchema);
   crepe.editor.use(relaxedTableHeaderSchema);
+  crepe.editor.use(nonInclusiveLinkSchema);
   crepe.editor.use(remarkMathPlugin);
   crepe.editor.use(mathInlineSchema);
   crepe.editor.use(mathBlockSchema);
