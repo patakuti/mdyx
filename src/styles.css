@@ -431,6 +431,42 @@ math-field::part(menu-toggle) {
   color: #c0392b;
 }
 
+.editor-context-menu {
+  position: fixed;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  min-width: 140px;
+  padding: 4px;
+  border-radius: 6px;
+  background-color: #ffffff;
+  color: #0f0f0f;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.editor-context-menu button {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.editor-context-menu button:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+/* Crepeのブロックハンドル(milkdown-block-handle)は「+」ボタン(1番目のoperation-item)
+   とドラッグ/操作メニューハンドル(2番目)を常に両方描画し、個別非表示の設定は無い
+   (feature/block-edit/handle/component.tsx確認済み)。「+」のみCSSで非表示にする
+   (01_requirements.md 3.10節、Phase 12)。 */
+.milkdown-block-handle .operation-item:first-child {
+  display: none;
+}
+
 @media (prefers-color-scheme: dark) {
   .settings-panel {
     background-color: #2f2f2f;
@@ -453,5 +489,14 @@ math-field::part(menu-toggle) {
 
   .insert-image-error {
     color: #e57368;
+  }
+
+  .editor-context-menu {
+    background-color: #2f2f2f;
+    color: #f6f6f6;
+  }
+
+  .editor-context-menu button:hover {
+    background-color: rgba(255, 255, 255, 0.12);
   }
 }

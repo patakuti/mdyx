@@ -2,7 +2,7 @@ mod commands;
 mod path_resolver;
 
 use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder};
-use tauri::{Emitter, Manager};
+use tauri::{Emitter, Manager, PhysicalPosition, PhysicalSize};
 
 /// Only reachable after the frontend has resolved any unsaved tabs and
 /// persisted the session (main.ts's `handleCloseRequested`) — see the
@@ -134,16 +134,54 @@ pub fn run() {
                 }
             });
 
-            // Block the window from closing immediately (whether from the
-            // OS close button or File > Exit's `window.close()` above) and
-            // hand off to the frontend instead: it may need to show one or
-            // more unsaved-changes confirmations first (`TabManager`,
-            // 02_design.md 12.5節/12.6節). The frontend calls the
-            // `confirm_close` command once it's actually ready to exit.
             if let Some(window) = app.get_webview_window("main") {
+                // Restore the window geometry saved at last exit (Phase 12,
+                // 02_design.md 15.2節) before the window is ever shown
+                // (`tauri.conf.json`'s `windows[0].visible` is `false`), so
+                // there's no visible jump from the default position/size.
+                // `window_x`/`window_y` were saved via `outer_position()`
+                // (whole window, decorations included) and `window_width`/
+                // `window_height` via `inner_size()` (content area, matching
+                // `tauri.conf.json`'s own `width`/`height` semantics) —
+                // restored the same way via `set_position`/`set_size`.
+                if let Ok(config) = commands::config::get_config(app.handle().clone()) {
+                    if let (Some(x), Some(y)) = (config.window_x, config.window_y) {
+                        let _ = window.set_position(PhysicalPosition::new(x, y));
+                    }
+                    if let (Some(width), Some(height)) = (config.window_width, config.window_height) {
+                        let _ = window.set_size(PhysicalSize::new(width, height));
+                    }
+                }
+                let _ = window.show();
+
+                // Block the window from closing immediately (whether from
+                // the OS close button or File > Exit's `window.close()`
+                // above) and hand off to the frontend instead: it may need
+                // to show one or more unsaved-changes confirmations first
+                // (`TabManager`, 02_design.md 12.5節/12.6節). The frontend
+                // calls the `confirm_close` command once it's actually
+                // ready to exit.
                 let emit_window = window.clone();
+                let geometry_window = window.clone();
+                let geometry_app = app.handle().clone();
                 window.on_window_event(move |event| {
                     if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                        // Captured here (not in the frontend's later
+                        // `save_open_tabs` flow, 12.7節) since the geometry
+                        // is already final the moment the user asked to
+                        // close, and doesn't need to wait on any unsaved-
+                        // changes confirmation (02_design.md 15.2節).
+                        if let (Ok(position), Ok(size)) =
+                            (geometry_window.outer_position(), geometry_window.inner_size())
+                        {
+                            let _ = commands::config::save_window_state(
+                                geometry_app.clone(),
+                                position.x,
+                                position.y,
+                                size.width,
+                                size.height,
+                            );
+                        }
                         api.prevent_close();
                         let _ = emit_window.emit("app-close-requested", ());
                     }

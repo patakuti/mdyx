@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { editorViewCtx } from "@milkdown/core";
 
 import { setupEditor } from "./editor/setup";
+import { setupEditorContextMenu } from "./editor/context-menu";
 import { TabManager } from "./tabs/tab-manager";
 import { setupTabBar } from "./tabs/tab-bar";
 import { setupToolbar, runInsertTable, runUndo, runRedo } from "./toolbar/tool-bar";
@@ -44,9 +45,18 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   refreshToolbar = setupToolbar(toolbarRoot, crepe);
   setupTabBar(tabBarRoot, emptyStateRoot, editorRoot, tabManager);
+  setupEditorContextMenu(editorRoot, crepe);
 
   const config = await getConfig();
   await tabManager.restoreSession(config.openTabs, config.activeTabIndex);
+
+  // Focus the editor so it's ready for typing immediately on startup
+  // (01_requirements.md 3.9節, Phase 12) — only if a tab actually exists
+  // (`getActiveId()` is null iff there are zero tabs, 3.5節's empty state,
+  // which has no editor to focus).
+  if (tabManager.getActiveId() !== null) {
+    crepe.editor.action((ctx) => ctx.get(editorViewCtx).focus());
+  }
 
   await listen("menu-file-new-tab", () => tabManager.createTab());
   await listen("menu-file-open", () => void tabManager.openFile());
