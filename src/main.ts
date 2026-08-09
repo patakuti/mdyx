@@ -5,13 +5,17 @@ import { editorViewCtx } from "@milkdown/core";
 import { setupEditor } from "./editor/setup";
 import { setupEditorContextMenu } from "./editor/context-menu";
 import { TabManager } from "./tabs/tab-manager";
+import { titleForTab } from "./tabs/tab-state";
 import { setupTabBar } from "./tabs/tab-bar";
 import { setupToolbar, runInsertTable, runUndo, runRedo } from "./toolbar/tool-bar";
 import { insertImageFromClipboardOrDialog } from "./clipboard/insert-image-dialog";
 import { insertPlantumlNodeFromClipboard } from "./editor/nodes/plantuml";
 import { showInsertLinkDialog } from "./editor/insert-link-dialog";
+import { exportToHtmlFile, openExportInBrowser } from "./export/html-export";
 import { openSettingsPanel } from "./settings/settings-panel";
 import { getConfig } from "./settings/config";
+import { applyEditorTheme } from "./theme/theme-style";
+import { showToast } from "./ui/toast";
 
 window.addEventListener("DOMContentLoaded", async () => {
   const editorRoot = document.querySelector<HTMLDivElement>("#editor-root");
@@ -37,6 +41,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     () => activeFilePath,
     () => refreshToolbar?.()
   );
+  await applyEditorTheme();
 
   const tabManager = new TabManager(crepe);
   tabManager.init();
@@ -75,7 +80,23 @@ window.addEventListener("DOMContentLoaded", async () => {
   await listen("menu-insert-link", () =>
     crepe.editor.action((ctx) => showInsertLinkDialog(ctx, () => activeFilePath))
   );
+  await listen("menu-export-html", () =>
+    crepe.editor.action((ctx) => void runExport(exportToHtmlFile(ctx, exportTitle(), activeFilePath)))
+  );
+  await listen("menu-export-open-browser", () =>
+    crepe.editor.action((ctx) => void runExport(openExportInBrowser(ctx, exportTitle(), activeFilePath)))
+  );
   await listen("menu-settings-plantuml-server", () => void openSettingsPanel());
+  await listen("menu-settings-theme", () => void openSettingsPanel());
+
+  // Export's HTML <title> and temp-file name (html-export.ts) both want a
+  // plain "document name", not a full path — reuses the tab bar's own
+  // "Untitled"/basename logic (tab-state.ts) and additionally strips the
+  // `.md` extension, since neither an HTML <title> nor a downstream
+  // "notes.html" file name should keep it.
+  function exportTitle(): string {
+    return titleForTab({ filePath: activeFilePath }).replace(/\.[^./\\]+$/, "");
+  }
 
   // Fired by Rust when the window's close button is clicked, or File > Exit
   // is chosen (both funnel into the same `WindowEvent::CloseRequested`
@@ -83,6 +104,19 @@ window.addEventListener("DOMContentLoaded", async () => {
   // first, then hand back to Rust to actually persist the session and exit.
   await listen("app-close-requested", () => void handleCloseRequested(tabManager));
 });
+
+/// Export > Export to HTML/Open in Browser (html-export.ts) can fail for
+/// reasons genuinely worth surfacing (a PlantUML re-render mid-export, the
+/// temp/target file write) — unlike most other menu actions here, which
+/// either can't fail in a user-actionable way or already show their own
+/// toast internally.
+async function runExport(work: Promise<void>): Promise<void> {
+  try {
+    await work;
+  } catch (error) {
+    showToast(`Export failed: ${String(error)}`, "error");
+  }
+}
 
 async function handleCloseRequested(tabManager: TabManager): Promise<void> {
   const canProceed = await tabManager.confirmAllDirtyTabs();

@@ -1,0 +1,71 @@
+/* Structural rules, always applied regardless of which theme (built-in or
+   custom) is selected — colors/fonts live entirely in the theme file. Ported
+   from markdown-proxy's own base/theme split (internal/template/css.go's
+   `commonCSS`, https://github.com/patakuti/markdown-proxy), which is why a
+   custom CSS file only needs to carry colors, not re-declare layout. Found
+   missing (Phase 15, real-machine check): selecting a custom theme replaced
+   this layer entirely instead of layering on top of it, unlike
+   markdown-proxy — an arbitrary theme file (including one of
+   markdown-proxy's own) lost `.mdyx-content`'s padding/max-width/table
+   layout/print handling since none of that is a "color" concern a theme
+   file would think to redeclare. */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.mdyx-content {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  line-height: 1.6;
+}
+
+.mdyx-content table {
+  border-collapse: collapse;
+  width: auto;
+  table-layout: auto;
+}
+
+.mdyx-content table th,
+.mdyx-content table td {
+  border: 1px solid;
+  padding: 6px 13px;
+}
+
+.mdyx-content img {
+  max-width: 100%;
+}
+
+.mdyx-content .plantuml-node {
+  text-align: center;
+  margin: 16px 0;
+}
+
+@media print {
+  .mdyx-content table,
+  .mdyx-content pre,
+  .mdyx-content img,
+  .mdyx-content blockquote,
+  .mdyx-content li,
+  .mdyx-content .plantuml-node {
+    break-inside: avoid;
+  }
+  .mdyx-content h1,
+  .mdyx-content h2,
+  .mdyx-content h3,
+  .mdyx-content h4,
+  .mdyx-content h5,
+  .mdyx-content h6 {
+    break-after: avoid;
+  }
+  .mdyx-content,
+  .mdyx-content * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

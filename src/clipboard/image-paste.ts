@@ -17,7 +17,9 @@ export type ClipboardPasteContent =
   | { kind: "binary" }
   | { kind: "none" };
 
-const URL_SCHEME_PATTERN = /^[a-z][a-z0-9+.-]*:/i;
+/// Also reused by export/html-export.ts, which needs the same "is this
+/// already a URL, not a filesystem path" check for `<img>` src rewriting.
+export const URL_SCHEME_PATTERN = /^[a-z][a-z0-9+.-]*:/i;
 
 /// Mirrors Rust's `path_resolver::IMAGE_EXTENSIONS`. Used as a cheap
 /// synchronous pre-filter before paying for an async Rust round-trip

@@ -1,0 +1,68 @@
+/* MDyX built-in theme: github. Colors/fonts only — layout (padding,
+   max-width, table structure, print handling) lives in base.css, always
+   applied underneath whichever theme is selected. Adapted from
+   markdown-proxy's own "github" theme
+   (https://github.com/patakuti/markdown-proxy, internal/themes/themes.go's
+   `buildGithubCSS`) — `.markdown-body` renamed to `.mdyx-content` (kept as
+   an additional class too, 02_design.md 18.2節, so a markdown-proxy theme
+   file also works unmodified as a MDyX custom theme) and proxy-only chrome
+   (toolbar, TOC panel, copy button, PlantUML-disabled notice) dropped,
+   since none of it exists in MDyX. */
+
+.mdyx-content {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #24292e;
+  background: #fff;
+}
+
+.mdyx-content h1,
+.mdyx-content h2 {
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid #eaecef;
+}
+
+.mdyx-content a {
+  color: #0366d6;
+  text-decoration: none;
+}
+
+.mdyx-content a:hover {
+  text-decoration: underline;
+}
+
+.mdyx-content code {
+  background: rgba(27, 31, 35, 0.05);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-size: 85%;
+}
+
+.mdyx-content pre {
+  background: #f6f8fa;
+  padding: 16px;
+  border-radius: 6px;
+  border: 1px solid #e1e4e8;
+  overflow: auto;
+}
+
+.mdyx-content pre code {
+  background: none;
+  padding: 0;
+  font-size: 100%;
+}
+
+.mdyx-content blockquote {
+  color: #6a737d;
+  border-left: 0.25em solid #dfe2e5;
+  padding: 0 1em;
+  margin: 0;
+}
+
+.mdyx-content table th,
+.mdyx-content table td {
+  border-color: #dfe2e5;
+}
+
+.mdyx-content table tr:nth-child(2n) {
+  background-color: #f6f8fa;
+}

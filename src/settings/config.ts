@@ -7,6 +7,11 @@ export interface AppConfig {
   openTabs: string[];
   /// Index into `openTabs` of the tab that was active, or `null`.
   activeTabIndex: number | null;
+  /// Export/editor display theme (Phase 15, 01_requirements.md 10.3節): a
+  /// built-in theme name (theme/theme-style.ts's `BUILTIN_THEMES`), or
+  /// `"custom"` — in which case `customCssPath` names the CSS file to use.
+  theme: string;
+  customCssPath: string | null;
 }
 
 export function getConfig(): Promise<AppConfig> {
@@ -19,4 +24,8 @@ export function getConfig(): Promise<AppConfig> {
 /// didn't fetch and re-supply.
 export function savePlantumlServerUrl(url: string): Promise<void> {
   return invoke("save_plantuml_server_url", { url });
+}
+
+export function saveTheme(theme: string, customCssPath: string | null): Promise<void> {
+  return invoke("save_theme", { theme, customCssPath });
 }

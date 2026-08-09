@@ -6,9 +6,14 @@ use tauri::Manager;
 
 const CONFIG_FILE_NAME: &str = "config.json";
 const DEFAULT_PLANTUML_SERVER_URL: &str = "https://www.plantuml.com/plantuml/svg/";
+const DEFAULT_THEME: &str = "github";
 
 fn default_plantuml_server_url() -> String {
     DEFAULT_PLANTUML_SERVER_URL.to_string()
+}
+
+fn default_theme() -> String {
+    DEFAULT_THEME.to_string()
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -39,6 +44,24 @@ pub struct Config {
     pub window_width: Option<u32>,
     #[serde(default)]
     pub window_height: Option<u32>,
+    /// Export/editor display theme (01_requirements.md 10.3節, 02_design.md
+    /// 18.2節). Either a built-in theme name (`"github"`) or `"custom"`, in
+    /// which case `custom_css_path` names the CSS file to use instead.
+    #[serde(default = "default_theme")]
+    pub theme: String,
+    #[serde(default)]
+    pub custom_css_path: Option<String>,
+    /// Directory to pre-select in the Theme setting's "Browse..." dialog
+    /// (`pick_css_file`, file_io.rs), from the last CSS file successfully
+    /// picked — its own memory, independent of `last_opened_dir` (Markdown
+    /// files) and of Insert > Image/Link's Browse buttons (which instead
+    /// derive their starting directory from the *active tab's* folder each
+    /// time, file_io.rs's `pick_image_file`/`pick_link_file` doc comments).
+    /// A CSS theme file has no natural relationship to whichever Markdown
+    /// file happens to be open, so remembering where the user last went
+    /// looking for one is the closer fit here (01_requirements.md 10.6節).
+    #[serde(default)]
+    pub last_css_dir: Option<String>,
 }
 
 impl Default for Config {
@@ -52,6 +75,9 @@ impl Default for Config {
             window_y: None,
             window_width: None,
             window_height: None,
+            theme: default_theme(),
+            custom_css_path: None,
+            last_css_dir: None,
         }
     }
 }
@@ -87,6 +113,18 @@ pub fn save_config(app: tauri::AppHandle, config: Config) -> Result<(), String> 
 pub fn save_plantuml_server_url(app: tauri::AppHandle, url: String) -> Result<(), String> {
     let mut config = get_config(app.clone())?;
     config.plantuml_server_url = url;
+    save_config(app, config)
+}
+
+/// `custom_css_path` is only meaningful when `theme == "custom"`, but is
+/// still saved as given (not cleared) when `theme` is a built-in name — so
+/// switching back to "Custom..." in the theme dropdown (settings-panel.ts)
+/// remembers the last CSS file the user pointed at.
+#[tauri::command]
+pub fn save_theme(app: tauri::AppHandle, theme: String, custom_css_path: Option<String>) -> Result<(), String> {
+    let mut config = get_config(app.clone())?;
+    config.theme = theme;
+    config.custom_css_path = custom_css_path;
     save_config(app, config)
 }
 
