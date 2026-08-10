@@ -50,7 +50,8 @@ MDyX lets you edit plain Markdown files with a WYSIWYM ("What You See Is What Yo
 
 - **Insert**: paste PlantUML source (`@startuml` ... `@enduml`, with or without a ` ```plantuml ` fence around it) with nothing selected, or use Insert > PlantUML Diagram.
 - **Update**: select the diagram and paste new source to re-render it.
-- **External tools**: copying a selected diagram gives back its PlantUML source, to edit in a dedicated PlantUML editor (e.g. [Blockly PlantUML Editor](https://github.com/patakuti/blockly-plantuml-editor)) and paste back in. Diagrams are rendered by a PlantUML server, configurable in Settings.
+- **External tools**: copying a selected diagram gives back its PlantUML source, to edit in a dedicated PlantUML editor (e.g. [Blockly PlantUML Editor](https://github.com/patakuti/blockly-plantuml-editor)) and paste back in.
+- **Privacy**: rendering a PlantUML diagram sends its source text to a PlantUML server over the network — by default the public `plantuml.com` server. If your diagrams contain sensitive information, point Settings' "PlantUML Server URL" at a self-hosted server (or an internal one) instead. Mermaid diagrams, by contrast, are rendered entirely on-device and never leave your machine — see below.
 
 ![Copying a PlantUML diagram from MDyX into Blockly PlantUML Editor, editing it there, then copying it back](samples/demo2.gif)
 
