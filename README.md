@@ -17,7 +17,7 @@ MDyX lets you edit plain Markdown files with a WYSIWYM ("What You See Is What Yo
 - Everything round-trips through the clipboard: copy a table into a spreadsheet and back, and it's still a table. Same for diagrams and images.
 - Images are always referenced by path or URL, never embedded as binary data.
 - The saved file is plain, ordinary Markdown, readable by any other tool.
-- Export to a styled, standalone HTML file, or open it straight in your browser — PDF export is just your browser's own Print dialog away, with a theme you can customize (and which applies to the editor itself too).
+- Export to a styled, standalone HTML file (or straight to PDF via your browser's Print dialog), with a theme you can customize — see [Export](#export) below for details.
 
 ## Usage
 
@@ -38,6 +38,7 @@ MDyX lets you edit plain Markdown files with a WYSIWYM ("What You See Is What Yo
 - **Insert**: Insert > Math, or the toolbar's Σ button.
 - **Update**: click into the formula and edit it in place with MathLive's own LaTeX-style symbol palette.
 - **External tools**: not applicable — formulas are edited directly in MDyX.
+- Two different math renderers are used on purpose: [MathLive](https://cortexjs.io/mathlive/) while editing, for its interactive symbol palette, and [KaTeX](https://katex.org/) for exported HTML, which just needs lightweight static output with no editor attached.
 
 ### PlantUML diagrams
 
@@ -61,7 +62,7 @@ MDyX lets you edit plain Markdown files with a WYSIWYM ("What You See Is What Yo
 
 - **Export > Export to HTML...**: saves the current document as a single, self-contained HTML file (styling and math fonts embedded; images are referenced by an absolute path, not embedded).
 - **Export > Open in Browser**: same HTML, written to a temporary file and opened straight in your default browser — handy for a quick look, or for printing to PDF via the browser's own Print dialog (Ctrl/Cmd+P). MDyX doesn't generate PDF itself; your browser's Print-to-PDF already does this well.
-- **Styling**: Settings > Theme... picks a built-in theme or points at your own CSS file. The chosen theme applies to both the exported HTML and MDyX's own editing view, so what you see while editing matches what you get. A CSS file written for [markdown-proxy](https://github.com/patakuti/markdown-proxy) (`.markdown-body`-scoped) works as-is. Due to implementation constraints, two things in the *editing* view specifically don't fully follow the theme (exported HTML isn't affected by either): math formulas render into MathLive's own Shadow DOM, which external CSS can't reach; inline/block code syntax colors are driven by the editor framework's own internal color scheme, which isn't exposed for a theme to override.
+- **Styling**: Settings > Theme... picks a built-in theme or points at your own CSS file. The chosen theme applies to both the exported HTML and MDyX's own editing view, so what you see while editing matches what you get. A CSS file written for [markdown-proxy](https://github.com/patakuti/markdown-proxy) (`.markdown-body`-scoped) works as-is. Two exceptions, both limited to the *editing* view only (exported HTML always looks right): math formulas and code syntax highlighting colors don't fully follow a custom theme. In detail — math formulas render into MathLive's own Shadow DOM, which external CSS can't reach; inline/block code syntax colors are driven by the editor framework's own internal color scheme, which isn't exposed for a theme to override.
 
 ## Getting Started
 
