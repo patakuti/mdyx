@@ -4,6 +4,8 @@ A LyX-style WYSIWYM Markdown editor.
 
 MDyX lets you edit plain Markdown files with a WYSIWYM ("What You See Is What You Mean") interface in the spirit of [LyX](https://www.lyx.org/): an always-visible menu bar and formatting toolbar instead of raw Markdown syntax, while the file on disk stays plain, portable Markdown that any other editor or tool can open.
 
+![A table, a math formula, and a PlantUML diagram, all edited visually in one MDyX document](samples/sample-document.png)
+
 ## Why MDyX?
 
 - Good WYSIWYG-style Markdown editors turned out to be surprisingly hard to find.
@@ -27,6 +29,8 @@ MDyX lets you edit plain Markdown files with a WYSIWYM ("What You See Is What Yo
 - **Update**: select the table and paste a new one to replace it in place.
 - **External tools**: copying a selected table writes both an HTML and a Markdown version to the clipboard, so it pastes back correctly into a spreadsheet app too — merged cells included.
 
+![Copying a table from LibreOffice Calc into MDyX, then copying it back out again](samples/demo1.gif)
+
 ### Images
 
 - **Insert**: paste a file path or URL with nothing selected, or use Insert > Image (opens a dialog to type a path/URL or browse for a file, if the clipboard doesn't have a usable one).
@@ -45,6 +49,8 @@ MDyX lets you edit plain Markdown files with a WYSIWYM ("What You See Is What Yo
 - **Insert**: paste PlantUML source (`@startuml` ... `@enduml`, with or without a ` ```plantuml ` fence around it) with nothing selected, or use Insert > PlantUML Diagram.
 - **Update**: select the diagram and paste new source to re-render it.
 - **External tools**: copying a selected diagram gives back its PlantUML source, to edit in a dedicated PlantUML editor (e.g. [Blockly PlantUML Editor](https://github.com/patakuti/blockly-plantuml-editor)) and paste back in. Diagrams are rendered by a PlantUML server, configurable in Settings.
+
+![Copying a PlantUML diagram from MDyX into Blockly PlantUML Editor, editing it there, then copying it back](samples/demo2.gif)
 
 ### Mermaid diagrams
 
