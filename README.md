@@ -106,3 +106,7 @@ Pushing a `vX.Y.Z` tag (or running the [Release workflow](.github/workflows/rele
 ## Built With
 
 [Tauri](https://tauri.app/) · [Milkdown](https://milkdown.dev/) + [Crepe](https://milkdown.dev/docs/guide/using-crepe) (ProseMirror + remark) · [MathLive](https://cortexjs.io/mathlive/) for editing, [KaTeX](https://katex.org/) for exported math · plain Markdown as the save format
+
+## License
+
+[MIT](LICENSE)
