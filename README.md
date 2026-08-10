@@ -92,6 +92,10 @@ npm run build
 npm run tauri build
 ```
 
+### Downloads / CI
+
+Pushing a `vX.Y.Z` tag (or running the [Release workflow](.github/workflows/release.yml) manually from the Actions tab) builds installers for Windows, macOS (universal), and Linux via GitHub Actions and attaches them as a draft [Release](../../releases). Binaries are unsigned, so first launch shows an OS warning: on Windows, click "More info" > "Run anyway" in the SmartScreen dialog; on macOS, right-click the app and choose "Open" (or run `xattr -d com.apple.quarantine <path>`), since it isn't notarized.
+
 ## Built With
 
 [Tauri](https://tauri.app/) · [Milkdown](https://milkdown.dev/) + [Crepe](https://milkdown.dev/docs/guide/using-crepe) (ProseMirror + remark) · [MathLive](https://cortexjs.io/mathlive/) for editing, [KaTeX](https://katex.org/) for exported math · plain Markdown as the save format
