@@ -109,22 +109,31 @@ export class TabManager {
     return tab;
   }
 
+  /// Sets `activeId` and notifies listeners (`emit()`) *before* pushing the
+  /// new/target tab's `EditorState` into the shared view. `view.updateState`
+  /// synchronously (re)constructs a NodeView for every node in the incoming
+  /// document — including any that read `getActiveFilePath()` at
+  /// construction time (nodes/image-view.ts, to resolve a relative `src`) —
+  /// so if `emit()` ran afterward instead, that read would still see
+  /// whichever file path was active *before* this switch. Confirmed by hand:
+  /// opening a file whose Markdown contains a relative image path resolved
+  /// the image against the previously active tab's directory (or `null`),
+  /// producing a broken image every time, until this ordering was fixed.
   private setActive(tab: TabState): void {
     this.activeId = tab.id;
+    this.emit();
     this.withCtx((ctx) => ctx.get(editorViewCtx).updateState(tab.editorState));
   }
 
   createTab(): void {
     const tab = this.pushTab(this.withCtx((ctx) => this.emptyEditorState(ctx)), null);
     this.setActive(tab);
-    this.emit();
   }
 
   switchTo(id: string): void {
     const tab = this.tabs.find((t) => t.id === id);
     if (!tab || tab.id === this.activeId) return;
     this.setActive(tab);
-    this.emit();
   }
 
   switchRelative(delta: 1 | -1): void {
@@ -155,7 +164,6 @@ export class TabManager {
       tab.filePath = path;
     }
     this.setActive(tab);
-    this.emit();
   }
 
   private async writeToPath(tab: TabState, path: string): Promise<void> {

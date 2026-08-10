@@ -14,8 +14,8 @@ import {
   createGeneralImagePastePlugin,
   setupImagePasteInterceptor,
 } from "../clipboard/image-clipboard-plugin";
-import { resolveImageDisplaySrc } from "../clipboard/image-paste";
 import type { ActiveFilePathGetter } from "../clipboard/image-paste";
+import { createImageView } from "./nodes/image-view";
 import { remarkMathPlugin, mathInlineSchema, mathBlockSchema } from "./nodes/math";
 import { mathInlineView, mathBlockView } from "./nodes/math-view";
 import { nonCustomFenceCodeBlockSchema } from "./nodes/fenced-code-block";
@@ -131,15 +131,23 @@ export async function setupEditor(
       // `$$...$$` syntax (01_requirements.md 4章 chose MathLive for a
       // LyX-like visual editing experience instead).
       [Crepe.Feature.Latex]: false,
-    },
-    featureConfigs: {
-      [Crepe.Feature.ImageBlock]: {
-        proxyDomURL: (src: string) => resolveImageDisplaySrc(src, getActiveFilePath),
-      },
+      // Disabled entirely, not just left at its defaults: its bundled
+      // `remark-image-block` plugin silently promotes any image that's
+      // alone in its own paragraph (the common case — e.g. every image in
+      // this very README) into a different node type on every file open,
+      // which this app's whole image round-trip design (5.2節) never
+      // recognized — breaking both display (its own unresolved-`src`
+      // placeholder) and Copy (its own `toMarkdown` writes the resize
+      // ratio into the alt slot, e.g. `![1.00](path)`, confirmed via a real
+      // repro). `createImageView` (nodes/image-view.ts) below replaces the
+      // one thing this app actually wanted from the feature — proxyDomURL
+      // display resolution — without the promotion.
+      [Crepe.Feature.ImageBlock]: false,
     },
   });
   crepe.editor.use(createImageClipboardPlugin(getActiveFilePath));
   crepe.editor.use(createGeneralImagePastePlugin(getActiveFilePath));
+  crepe.editor.use(createImageView(getActiveFilePath));
   crepe.editor.use(tableClipboardPlugin);
   crepe.editor.use(relaxedTableCellSchema);
   crepe.editor.use(relaxedTableHeaderSchema);
