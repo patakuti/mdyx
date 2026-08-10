@@ -1,8 +1,12 @@
 mod commands;
 mod path_resolver;
 
+use std::sync::Mutex;
+
 use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder};
 use tauri::{Emitter, Manager, PhysicalPosition, PhysicalSize};
+
+use commands::startup::{first_file_arg, StartupFilePath};
 
 /// Only reachable after the frontend has resolved any unsaved tabs and
 /// persisted the session (main.ts's `handleCloseRequested`) — see the
@@ -14,7 +18,28 @@ fn confirm_close(app: tauri::AppHandle) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // Read before `Builder` takes over, so it reflects *this* process's own
+    // launch arguments — the single-instance callback below only ever fires
+    // for a *second* launch, never the first (02_design.md 21章).
+    let startup_file_path = first_file_arg(std::env::args().skip(1));
+
     tauri::Builder::default()
+        // Must be the very first plugin registered (Tauri's own
+        // requirement): it needs to intercept a second launch before any
+        // other plugin's setup runs, so that launch can exit immediately
+        // instead of standing up a second, redundant app instance.
+        .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
+            let Some(window) = app.get_webview_window("main") else {
+                return;
+            };
+            let _ = window.unminimize();
+            let _ = window.show();
+            let _ = window.set_focus();
+            if let Some(path) = first_file_arg(argv.into_iter().skip(1)) {
+                let _ = window.emit("open-file-path", path);
+            }
+        }))
+        .manage(StartupFilePath(Mutex::new(startup_file_path)))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_clipboard_manager::init())
@@ -41,6 +66,7 @@ pub fn run() {
             commands::config::save_plantuml_server_url,
             commands::config::save_theme,
             commands::config::save_open_tabs,
+            commands::startup::take_startup_file_path,
             confirm_close,
         ])
         .setup(|app| {
