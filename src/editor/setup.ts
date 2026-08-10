@@ -18,9 +18,13 @@ import { resolveImageDisplaySrc } from "../clipboard/image-paste";
 import type { ActiveFilePathGetter } from "../clipboard/image-paste";
 import { remarkMathPlugin, mathInlineSchema, mathBlockSchema } from "./nodes/math";
 import { mathInlineView, mathBlockView } from "./nodes/math-view";
-import { nonPlantumlCodeBlockSchema, plantumlSchema } from "./nodes/plantuml";
+import { nonCustomFenceCodeBlockSchema } from "./nodes/fenced-code-block";
+import { plantumlSchema } from "./nodes/plantuml";
 import { plantumlView } from "./nodes/plantuml-view";
 import { plantumlClipboardPlugin } from "../clipboard/plantuml-clipboard-plugin";
+import { mermaidSchema } from "./nodes/mermaid";
+import { mermaidView } from "./nodes/mermaid-view";
+import { mermaidClipboardPlugin } from "../clipboard/mermaid-clipboard-plugin";
 import { tableClipboardPlugin } from "../clipboard/table-clipboard-plugin";
 
 // Milkdown's built-in table cell schema allows exactly one paragraph per
@@ -145,10 +149,13 @@ export async function setupEditor(
   crepe.editor.use(mathBlockSchema);
   crepe.editor.use(mathInlineView);
   crepe.editor.use(mathBlockView);
-  crepe.editor.use(nonPlantumlCodeBlockSchema);
+  crepe.editor.use(nonCustomFenceCodeBlockSchema);
   crepe.editor.use(plantumlSchema);
   crepe.editor.use(plantumlView);
   crepe.editor.use(plantumlClipboardPlugin);
+  crepe.editor.use(mermaidSchema);
+  crepe.editor.use(mermaidView);
+  crepe.editor.use(mermaidClipboardPlugin);
   crepe.editor.use(createToolbarSyncPlugin(onEditorUpdate));
 
   await crepe.create();

@@ -41,7 +41,8 @@ body {
   max-width: 100%;
 }
 
-.mdyx-content .plantuml-node {
+.mdyx-content .plantuml-node,
+.mdyx-content .mermaid-node {
   text-align: center;
   margin: 16px 0;
 }
@@ -52,7 +53,8 @@ body {
   .mdyx-content img,
   .mdyx-content blockquote,
   .mdyx-content li,
-  .mdyx-content .plantuml-node {
+  .mdyx-content .plantuml-node,
+  .mdyx-content .mermaid-node {
     break-inside: avoid;
   }
   .mdyx-content h1,

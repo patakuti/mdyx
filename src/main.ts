@@ -10,6 +10,7 @@ import { setupTabBar } from "./tabs/tab-bar";
 import { setupToolbar, runInsertTable, runUndo, runRedo } from "./toolbar/tool-bar";
 import { insertImageFromClipboardOrDialog } from "./clipboard/insert-image-dialog";
 import { insertPlantumlNodeFromClipboard } from "./editor/nodes/plantuml";
+import { insertMermaidNodeFromClipboard } from "./editor/nodes/mermaid";
 import { showInsertLinkDialog } from "./editor/insert-link-dialog";
 import { exportToHtmlFile, openExportInBrowser } from "./export/html-export";
 import { openSettingsPanel } from "./settings/settings-panel";
@@ -76,6 +77,9 @@ window.addEventListener("DOMContentLoaded", async () => {
   );
   await listen("menu-insert-plantuml", () =>
     crepe.editor.action((ctx) => void insertPlantumlNodeFromClipboard(ctx.get(editorViewCtx)))
+  );
+  await listen("menu-insert-mermaid", () =>
+    crepe.editor.action((ctx) => void insertMermaidNodeFromClipboard(ctx.get(editorViewCtx)))
   );
   await listen("menu-insert-link", () =>
     crepe.editor.action((ctx) => showInsertLinkDialog(ctx, () => activeFilePath))

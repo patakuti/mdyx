@@ -1,6 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
 import { $nodeSchema } from "@milkdown/utils";
-import { codeBlockSchema } from "@milkdown/preset-commonmark";
 import { NodeSelection } from "@milkdown/prose/state";
 import { insertPoint } from "@milkdown/prose/transform";
 import type { EditorView } from "@milkdown/prose/view";
@@ -35,27 +34,6 @@ export function extractPlantumlSource(text: string): string | null {
   const unfenced = fenceMatch?.[1].trim();
   return unfenced && PLANTUML_SOURCE_PATTERN.test(unfenced) ? unfenced : null;
 }
-
-/// Crepe's default `code_block` node otherwise claims every mdast `code`
-/// node unconditionally (parseMarkdown.match only checks `type === "code"`,
-/// see @milkdown/preset-commonmark/src/node/code-block.ts), so without this
-/// override it would always win the parser match over `plantumlSchema`
-/// below and no ` ```plantuml ` fence would ever reach it. Narrowing the
-/// match to exclude the `plantuml` language leaves every other fenced code
-/// block (JS, Python, ...) going through Crepe's own code block exactly as
-/// before.
-export const nonPlantumlCodeBlockSchema = codeBlockSchema.extendSchema(
-  (factory) => (ctx) => {
-    const base = factory(ctx);
-    return {
-      ...base,
-      parseMarkdown: {
-        ...base.parseMarkdown,
-        match: (node) => node.type === "code" && node.lang !== PLANTUML_LANGUAGE,
-      },
-    };
-  }
-);
 
 /// `svg` caches the last successful render so it survives NodeView
 /// recreation (e.g. undo/redo), but is intentionally left out of
