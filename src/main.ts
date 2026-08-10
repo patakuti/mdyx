@@ -57,6 +57,14 @@ window.addEventListener("DOMContentLoaded", async () => {
   const config = await getConfig();
   await tabManager.restoreSession(config.openTabs, config.activeTabIndex);
 
+  // A file given on this process's own command line (02_design.md 21章) —
+  // read *after* restoreSession so it opens as an additional tab rather
+  // than replacing the restored ones, and *before* the focus block below
+  // so whichever tab ends up active (the restored one, or this one) is the
+  // one that gets focused.
+  const startupFilePath = await invoke<string | null>("take_startup_file_path");
+  if (startupFilePath) await tabManager.openPath(startupFilePath);
+
   // Focus the editor so it's ready for typing immediately on startup
   // (01_requirements.md 3.9節, Phase 12) — only if a tab actually exists
   // (`getActiveId()` is null iff there are zero tabs, 3.5節's empty state,
@@ -64,6 +72,13 @@ window.addEventListener("DOMContentLoaded", async () => {
   if (tabManager.getActiveId() !== null) {
     crepe.editor.action((ctx) => ctx.get(editorViewCtx).focus());
   }
+
+  // A file given on a *second* launch's command line, forwarded here by
+  // the already-running instance (`tauri_plugin_single_instance`'s
+  // callback in lib.rs, 02_design.md 21章) — unlike the startup path
+  // above, this instance is already fully running, so a plain event is
+  // fine (no risk of firing before this listener exists).
+  await listen<string>("open-file-path", (event) => void tabManager.openPath(event.payload));
 
   await listen("menu-file-new-tab", () => tabManager.createTab());
   await listen("menu-file-open", () => void tabManager.openFile());

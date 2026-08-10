@@ -149,10 +149,51 @@ export class TabManager {
     this.loadFile(opened.path, opened.content);
   }
 
-  /// File > Open target selection (01_requirements.md 3.5節): reuse the
+  /// Opens a file given directly by path rather than through the native
+  /// Open dialog — the command-line-argument/single-instance startup path
+  /// (02_design.md 21章, `take_startup_file_path`/`open-file-path` in
+  /// main.ts). Shares `loadFile`'s reuse-a-blank-tab/already-open-tab
+  /// logic, and the same error handling as a `restoreSession` entry that
+  /// failed to reopen.
+  ///
+  /// Checks for an already-open tab *before* reading the file (`loadFile`
+  /// does too, but only after a successful read): re-launching `mdyx` on a
+  /// file that's already open shouldn't fail with a "could not open" toast
+  /// just because that file was, say, deleted or unmounted since — the tab
+  /// with its last-known content is right there and switching to it needs
+  /// no read at all.
+  async openPath(path: string): Promise<void> {
+    const alreadyOpen = this.tabs.find((t) => t.filePath === path);
+    if (alreadyOpen) {
+      this.setActive(alreadyOpen);
+      return;
+    }
+    try {
+      const content = await invoke<string>("read_file", { path });
+      this.loadFile(path, content);
+    } catch {
+      showToast(`Could not open "${path}" — it may have been moved or deleted.`, "warning");
+    }
+  }
+
+  /// File > Open target selection (01_requirements.md 3.5節/12.2節): if
+  /// `path` is already open in some tab, just switch to it — re-reading
+  /// `content` over top would either discard unsaved edits in that tab or
+  /// (harmlessly but pointlessly) duplicate it, and neither is useful when
+  /// the file's contents are already right there. Otherwise, reuse the
   /// active tab only if it's a never-touched blank tab; otherwise open into
-  /// a new tab (including when there are currently 0 tabs).
+  /// a new tab (including when there are currently 0 tabs). `path` is
+  /// always absolute here (the native Open dialog's result, or
+  /// `first_file_arg`'s canonicalized startup-argument path, 02_design.md
+  /// 21章) — the same as every `filePath` this compares against — so this
+  /// is a plain string comparison, no normalization needed.
   private loadFile(path: string, content: string): void {
+    const alreadyOpen = this.tabs.find((t) => t.filePath === path);
+    if (alreadyOpen) {
+      this.setActive(alreadyOpen);
+      return;
+    }
+
     const state =
       this.withCtx((ctx) => buildEditorStateFromMarkdown(ctx, content)) ??
       this.withCtx((ctx) => this.emptyEditorState(ctx));

@@ -15,6 +15,7 @@ MDyX lets you edit plain Markdown files with a WYSIWYM ("What You See Is What Yo
 ## Features
 
 - Tabbed editing of multiple Markdown files, with your open tabs and window layout restored the next time you launch the app.
+- Single-instance: launching MDyX while it's already running (e.g. `mdyx some-file.md` from a terminal) opens that file as a new tab in the existing window instead of starting a second copy — see [Command line](#command-line) below.
 - Tables with merged cells, math formulas, and PlantUML/Mermaid diagrams, all edited visually — no Markdown syntax to type or memorize.
 - Everything round-trips through the clipboard: copy a table into a spreadsheet and back, and it's still a table. Same for diagrams and images.
 - Images are always referenced by path or URL, never embedded as binary data.
@@ -70,6 +71,12 @@ MDyX lets you edit plain Markdown files with a WYSIWYM ("What You See Is What Yo
 - **Export > Export to HTML...**: saves the current document as a single, self-contained HTML file (styling and math fonts embedded; images are referenced by an absolute path, not embedded).
 - **Export > Open in Browser**: same HTML, written to a temporary file and opened straight in your default browser — handy for a quick look, or for printing to PDF via the browser's own Print dialog (Ctrl/Cmd+P). MDyX doesn't generate PDF itself; your browser's Print-to-PDF already does this well.
 - **Styling**: Settings > Theme... picks a built-in theme or points at your own CSS file. The chosen theme applies to both the exported HTML and MDyX's own editing view, so what you see while editing matches what you get. A CSS file written for [markdown-proxy](https://github.com/patakuti/markdown-proxy) (`.markdown-body`-scoped) works as-is. Two exceptions, both limited to the *editing* view only (exported HTML always looks right): math formulas and code syntax highlighting colors don't fully follow a custom theme. In detail — math formulas render into MathLive's own Shadow DOM, which external CSS can't reach; inline/block code syntax colors are driven by the editor framework's own internal color scheme, which isn't exposed for a theme to override.
+
+### Command line
+
+- `mdyx path/to/file.md` opens that file as a new tab, in addition to whatever tabs were restored from your last session. If that file is already open in a tab, MDyX just switches to it rather than opening a duplicate.
+- Only one instance of MDyX runs at a time: launching it again — with or without a file argument — is detected and handed off to the already-running instance instead of opening a second window. With a file argument, that file opens as a new tab there (or, again, switches to it if it's already open).
+- **Known limitation (Linux, confirmed by hand on GNOME Shell)**: bringing the existing window to the front on a repeat launch doesn't reliably work — GNOME Shell's focus-stealing prevention blocks it, so the window may stay behind whatever you're currently using. Switch to it manually (e.g. from the taskbar/Activities view) if that happens. Process de-duplication itself (never ending up with two copies running) works correctly regardless. Windows/macOS behavior here hasn't been verified yet.
 
 ## Getting Started
 
