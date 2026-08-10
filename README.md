@@ -36,6 +36,7 @@ MDyX lets you edit plain Markdown files with a WYSIWYM ("What You See Is What Yo
 - **Insert**: paste a file path or URL with nothing selected, or use Insert > Image (opens a dialog to type a path/URL or browse for a file, if the clipboard doesn't have a usable one).
 - **Update**: select the image and paste a new path/URL to replace it.
 - **External tools**: copying a selected image gives you back its file path, to hand off to another program.
+- **Select the image itself** (click directly on it) before copying. Unlike tables/PlantUML/Mermaid, an image is an *inline* element — Markdown lets it sit inline with surrounding text — so it's always nested inside a paragraph. Clicking a block's drag handle (the grip icon in the left margin) selects that paragraph, not the image nested inside it, and copying a paragraph selection gives back its content, not the image's file path. This applies even when the paragraph contains nothing but the image.
 
 ### Math
 

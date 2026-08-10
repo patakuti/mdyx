@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { editorViewCtx } from "@milkdown/core";
+import { NodeSelection } from "@milkdown/prose/state";
 import type { Crepe } from "@milkdown/crepe";
 import type { EditorView } from "@milkdown/prose/view";
 
@@ -67,6 +68,38 @@ async function pasteFromClipboard(view: EditorView): Promise<void> {
   view.dom.dispatchEvent(event);
 }
 
+/// Right-clicking an atom node (image, PlantUML, Mermaid, math, ...) via its
+/// block handle grip (Crepe's drag icon to the left of the block, rendered
+/// outside the node's own DOM) reaches this listener without ever going
+/// through that node's own `mousedown`-to-NodeSelection handling (e.g.
+/// image-view.ts relies on ProseMirror's default click-to-select, which is
+/// keyed to the left mouse button; plantuml-view.ts/mermaid-view.ts's own
+/// explicit handler is too). So Copy (below) ran against whichever
+/// selection happened to exist beforehand — reported by a user testing the
+/// image round-trip (01_requirements.md 5.2節): Ctrl+C after left-clicking
+/// the image copied the right absolute path, but right-clicking the grip
+/// icon directly and choosing Copy from this menu did not. This resolves
+/// the doc position under the right-click and, if it's immediately next to
+/// an atom node not already selected, selects it first — mirroring what a
+/// left-click on the node's own content already does — so Copy has the
+/// right thing selected regardless of which path opened the menu.
+function selectAtomNodeAtCoords(view: EditorView, x: number, y: number): void {
+  const coords = view.posAtCoords({ left: x, top: y });
+  if (!coords) return;
+
+  const $pos = view.state.doc.resolve(coords.pos);
+  const pos = $pos.nodeAfter?.type.isAtom
+    ? coords.pos
+    : $pos.nodeBefore?.type.isAtom
+      ? coords.pos - $pos.nodeBefore.nodeSize
+      : null;
+  if (pos == null) return;
+
+  const { selection } = view.state;
+  if (selection instanceof NodeSelection && selection.from === pos) return;
+  view.dispatch(view.state.tr.setSelection(NodeSelection.create(view.state.doc, pos)));
+}
+
 function buildItems(crepe: Crepe): MenuItem[] {
   return [
     { label: "Cut", run: () => document.execCommand("cut") },
@@ -106,6 +139,10 @@ export function setupEditorContextMenu(root: HTMLElement, crepe: Crepe): void {
   root.addEventListener("contextmenu", (event) => {
     event.preventDefault();
     close();
+
+    crepe.editor.action((ctx) => {
+      selectAtomNodeAtCoords(ctx.get(editorViewCtx), event.clientX, event.clientY);
+    });
 
     const el = document.createElement("div");
     el.className = "editor-context-menu";

@@ -393,6 +393,25 @@ math-field::part(menu-toggle) {
   }
 }
 
+/* A failed <img> load (bad path, missing file) otherwise renders as
+   nothing at all in this app's WebView — see image-view.ts's `error`
+   listener doc comment — so this gives it a visible footprint (min-size +
+   dashed border) instead of silently vanishing from the document. */
+.image-node-error {
+  display: inline-block;
+  min-width: 120px;
+  min-height: 60px;
+  border: 1px dashed #c0392b;
+  background-color: rgba(192, 57, 43, 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+  .image-node-error {
+    border-color: #e57368;
+    background-color: rgba(229, 115, 104, 0.12);
+  }
+}
+
 .settings-overlay {
   position: fixed;
   inset: 0;
