@@ -351,6 +351,48 @@ math-field::part(menu-toggle) {
   }
 }
 
+.mermaid-node {
+  margin: 8px 0;
+  padding: 8px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  text-align: center;
+  overflow-x: auto;
+  font-size: 13px;
+  color: #666666;
+  cursor: pointer;
+}
+
+.mermaid-node svg {
+  max-width: 100%;
+}
+
+.mermaid-node.ProseMirror-selectednode {
+  border-color: #999999;
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.mermaid-node-error {
+  text-align: left;
+  white-space: pre-wrap;
+  color: #c0392b;
+}
+
+@media (prefers-color-scheme: dark) {
+  .mermaid-node {
+    color: #aaaaaa;
+  }
+
+  .mermaid-node.ProseMirror-selectednode {
+    border-color: #666666;
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+
+  .mermaid-node-error {
+    color: #e57368;
+  }
+}
+
 .settings-overlay {
   position: fixed;
   inset: 0;

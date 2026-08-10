@@ -89,6 +89,9 @@ pub fn run() {
             let insert_plantuml_item = MenuItemBuilder::with_id("insert-plantuml", "&PlantUML Diagram")
                 .accelerator("CmdOrCtrl+Alt+U")
                 .build(app)?;
+            let insert_mermaid_item = MenuItemBuilder::with_id("insert-mermaid", "&Mermaid Diagram")
+                .accelerator("CmdOrCtrl+Alt+E")
+                .build(app)?;
             let insert_link_item = MenuItemBuilder::with_id("insert-link", "&Link...")
                 .accelerator("CmdOrCtrl+K")
                 .build(app)?;
@@ -96,6 +99,7 @@ pub fn run() {
                 .item(&insert_table_item)
                 .item(&insert_image_item)
                 .item(&insert_plantuml_item)
+                .item(&insert_mermaid_item)
                 .item(&insert_link_item)
                 .build()?;
 
@@ -147,6 +151,7 @@ pub fn run() {
                     "insert-table" => Some("menu-insert-table"),
                     "insert-image" => Some("menu-insert-image"),
                     "insert-plantuml" => Some("menu-insert-plantuml"),
+                    "insert-mermaid" => Some("menu-insert-mermaid"),
                     "insert-link" => Some("menu-insert-link"),
                     "export-html" => Some("menu-export-html"),
                     "export-open-browser" => Some("menu-export-open-browser"),

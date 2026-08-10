@@ -7,6 +7,7 @@ import type { EditorState } from "@milkdown/prose/state";
 import type { MarkType, NodeType } from "@milkdown/prose/model";
 import { mathInlineSchema, insertMathNode } from "../editor/nodes/math";
 import { insertPlantumlNodeFromClipboard } from "../editor/nodes/plantuml";
+import { insertMermaidNodeFromClipboard } from "../editor/nodes/mermaid";
 import { insertTableFromClipboard } from "../clipboard/table-insert";
 import { showInsertLinkDialog } from "../editor/insert-link-dialog";
 import type { ActiveFilePathGetter } from "../clipboard/image-paste";
@@ -297,6 +298,12 @@ const BUTTON_GROUPS: ToolbarButton[][] = [
       title: "Insert PlantUML (Ctrl+Alt+U)",
       className: "tb-mono",
       action: (c) => c.editor.action((ctx) => void insertPlantumlNodeFromClipboard(ctx.get(editorViewCtx))),
+    },
+    {
+      label: "ME",
+      title: "Insert Mermaid (Ctrl+Alt+E)",
+      className: "tb-mono",
+      action: (c) => c.editor.action((ctx) => void insertMermaidNodeFromClipboard(ctx.get(editorViewCtx))),
     },
     {
       label: "Link",

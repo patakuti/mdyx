@@ -5,25 +5,32 @@ import type { Node as PMNode } from "@milkdown/prose/model";
 import { invoke } from "@tauri-apps/api/core";
 import { openPath } from "@tauri-apps/plugin-opener";
 import katex from "katex";
+import mermaid from "mermaid";
 
 import { URL_SCHEME_PATTERN } from "../clipboard/image-paste";
 import { getConfig } from "../settings/config";
 import { getExportCss } from "../theme/theme-style";
 
-const CUSTOM_ATOM_SELECTOR = '[data-type="math_inline"], [data-type="math_block"], [data-type="plantuml"]';
+const CUSTOM_ATOM_SELECTOR =
+  '[data-type="math_inline"], [data-type="math_block"], [data-type="plantuml"], [data-type="mermaid"]';
 
-/// `math_inline`/`math_block`/`plantuml`'s own `toDOM` (nodes/math.ts,
-/// nodes/plantuml.ts) only ever renders an empty placeholder carrying the
-/// node's *source* as a `data-*` attribute — the live editor never uses
-/// `toDOM` for these (it swaps in a NodeView, MathLive/the cached SVG,
-/// instead), so it was never given real rendered content to produce. This
-/// walks the placeholders `DOMSerializer.serializeFragment` below produced
-/// and fills each one in with what Export actually needs, in place:
-/// KaTeX-rendered static HTML for math (`renderToString`, since the export
-/// pipeline has no live MathLive instance to ask), and the plantuml node's
-/// cached SVG (rendering it on demand via the same `render_plantuml`
-/// command the live NodeView itself calls, if a tab is exported before its
-/// diagrams ever finished their own first render).
+let exportMermaidRenderId = 0;
+
+/// `math_inline`/`math_block`/`plantuml`/`mermaid`'s own `toDOM`
+/// (nodes/math.ts, nodes/plantuml.ts, nodes/mermaid.ts) only ever renders an
+/// empty placeholder carrying the node's *source* as a `data-*` attribute —
+/// the live editor never uses `toDOM` for these (it swaps in a NodeView,
+/// MathLive/the cached SVG, instead), so it was never given real rendered
+/// content to produce. This walks the placeholders
+/// `DOMSerializer.serializeFragment` below produced and fills each one in
+/// with what Export actually needs, in place: KaTeX-rendered static HTML for
+/// math (`renderToString`, since the export pipeline has no live MathLive
+/// instance to ask), the plantuml node's cached SVG (rendering it on demand
+/// via the same `render_plantuml` command the live NodeView itself calls, if
+/// a tab is exported before its diagrams ever finished their own first
+/// render), and the mermaid node's cached SVG (rendering it on demand via
+/// the same client-side `mermaid.render()` its own NodeView calls — no Rust
+/// command involved, 02_design.md 19章).
 ///
 /// Correlates each placeholder DOM element with its source `PMNode`
 /// positionally rather than via any ID: both `doc.descendants` and
@@ -35,7 +42,12 @@ const CUSTOM_ATOM_SELECTOR = '[data-type="math_inline"], [data-type="math_block"
 async function fillCustomAtomPlaceholders(doc: PMNode, container: HTMLElement): Promise<void> {
   const atomNodes: PMNode[] = [];
   doc.descendants((node) => {
-    if (node.type.name === "math_inline" || node.type.name === "math_block" || node.type.name === "plantuml") {
+    if (
+      node.type.name === "math_inline" ||
+      node.type.name === "math_block" ||
+      node.type.name === "plantuml" ||
+      node.type.name === "mermaid"
+    ) {
       atomNodes.push(node);
     }
     return true;
@@ -57,6 +69,12 @@ async function fillCustomAtomPlaceholders(doc: PMNode, container: HTMLElement): 
           source: node.attrs.source as string,
           serverUrl: plantumlServerUrl,
         });
+      }
+      el.innerHTML = svg;
+    } else if (node.type.name === "mermaid") {
+      let svg = node.attrs.svg as string;
+      if (!svg) {
+        ({ svg } = await mermaid.render(`mermaid-export-${exportMermaidRenderId++}`, node.attrs.source as string));
       }
       el.innerHTML = svg;
     } else {

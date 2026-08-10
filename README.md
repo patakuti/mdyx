@@ -13,7 +13,7 @@ MDyX lets you edit plain Markdown files with a WYSIWYM ("What You See Is What Yo
 ## Features
 
 - Tabbed editing of multiple Markdown files, with your open tabs and window layout restored the next time you launch the app.
-- Tables with merged cells, math formulas, and PlantUML diagrams, all edited visually — no Markdown syntax to type or memorize.
+- Tables with merged cells, math formulas, and PlantUML/Mermaid diagrams, all edited visually — no Markdown syntax to type or memorize.
 - Everything round-trips through the clipboard: copy a table into a spreadsheet and back, and it's still a table. Same for diagrams and images.
 - Images are always referenced by path or URL, never embedded as binary data.
 - The saved file is plain, ordinary Markdown, readable by any other tool.
@@ -44,6 +44,12 @@ MDyX lets you edit plain Markdown files with a WYSIWYM ("What You See Is What Yo
 - **Insert**: paste PlantUML source (`@startuml` ... `@enduml`, with or without a ` ```plantuml ` fence around it) with nothing selected, or use Insert > PlantUML Diagram.
 - **Update**: select the diagram and paste new source to re-render it.
 - **External tools**: copying a selected diagram gives back its PlantUML source, to edit in a dedicated PlantUML editor (e.g. [Blockly PlantUML Editor](https://github.com/patakuti/blockly-plantuml-editor)) and paste back in. Diagrams are rendered by a PlantUML server, configurable in Settings.
+
+### Mermaid diagrams
+
+- **Insert**: paste Mermaid source wrapped in a ` ```mermaid ` fenced code block with nothing selected, or use Insert > Mermaid Diagram. Unlike PlantUML, unfenced Mermaid text isn't auto-detected — Mermaid's syntax has no self-contained start/end marker to recognize it by, so the fence is required.
+- **Update**: select the diagram and paste new fenced source to re-render it.
+- **External tools**: copying a selected diagram writes its source back out wrapped in the same ` ```mermaid ` fence (e.g. to paste into [Mermaid Live Editor](https://mermaid.live/) or a GitHub Markdown file). Diagrams are rendered entirely on-device — no server or network connection involved.
 
 ### Links
 
