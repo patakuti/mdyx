@@ -67,6 +67,13 @@ MDyX lets you edit plain Markdown files with a WYSIWYM ("What You See Is What Yo
 - **Update**: click an existing link to edit or remove it from the floating toolbar's tooltip.
 - **External tools**: not applicable — links are edited directly in MDyX.
 
+### Find & Replace
+
+- **Find**: `Ctrl/Cmd+F`, or Edit > Find..., opens a floating bar over the document. Type to highlight every match and jump to the nearest one from the cursor; Enter/Shift+Enter (or the ▲/▼ buttons) step to the next/previous match, wrapping at the ends. Escape closes it.
+- **Replace**: `Ctrl/Cmd+H`, or Edit > Replace..., adds a replacement field to the same bar. Replace swaps the current match and moves to the next one; Replace All rewrites every match at once (undo it like any other edit — there's no separate confirmation).
+- Matching is plain substring, case-insensitive; there's no regular-expression mode.
+- **Select All**: `Ctrl/Cmd+A` already works everywhere text is editable (it's the browser's own behavior). Edit > Select All and the editor's right-click menu add an explicit entry for it too, since neither menu had one before.
+
 ### Export
 
 - **Export > Export to HTML...**: saves the current document as a single, self-contained HTML file (styling and math fonts embedded; images are referenced by an absolute path, not embedded).

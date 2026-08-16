@@ -5,6 +5,7 @@ import { tableCellSchema, tableHeaderSchema } from "@milkdown/preset-gfm";
 import { $prose } from "@milkdown/utils";
 import { Plugin } from "@milkdown/prose/state";
 import type { EditorView } from "@milkdown/prose/view";
+import { search } from "prosemirror-search";
 
 import "@milkdown/crepe/theme/common/style.css";
 import "@milkdown/crepe/theme/classic.css";
@@ -164,6 +165,11 @@ export async function setupEditor(
   crepe.editor.use(mermaidSchema);
   crepe.editor.use(mermaidView);
   crepe.editor.use(mermaidClipboardPlugin);
+  // Registered once here rather than per-tab: every tab's `EditorState` is
+  // built from `prosePluginsCtx` (`markdown-io/parser.ts`, `tab-manager.ts`),
+  // so this plugin's own state (current query + match decorations) ends up
+  // independently owned by each tab automatically (02_design.md 22.2節).
+  crepe.editor.use($prose(() => search()));
   crepe.editor.use(createToolbarSyncPlugin(onEditorUpdate));
 
   await crepe.create();

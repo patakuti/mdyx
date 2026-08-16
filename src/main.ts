@@ -7,7 +7,8 @@ import { setupEditorContextMenu } from "./editor/context-menu";
 import { TabManager } from "./tabs/tab-manager";
 import { titleForTab } from "./tabs/tab-state";
 import { setupTabBar } from "./tabs/tab-bar";
-import { setupToolbar, runInsertTable, runUndo, runRedo } from "./toolbar/tool-bar";
+import { setupToolbar, runInsertTable, runUndo, runRedo, runSelectAll } from "./toolbar/tool-bar";
+import { showFindBar, showReplaceBar, dismissFindBarOnTabSwitch } from "./editor/find-replace-bar";
 import { insertImageFromClipboardOrDialog } from "./clipboard/insert-image-dialog";
 import { insertPlantumlNodeFromClipboard } from "./editor/nodes/plantuml";
 import { insertMermaidNodeFromClipboard } from "./editor/nodes/mermaid";
@@ -48,6 +49,10 @@ window.addEventListener("DOMContentLoaded", async () => {
   tabManager.init();
   tabManager.onChange(() => {
     activeFilePath = tabManager.getActiveFilePath();
+    // The find/replace bar has no per-tab state of its own (02_design.md
+    // 22.2節) — closing it here just avoids showing a bar whose input no
+    // longer matches whichever tab is now active.
+    dismissFindBarOnTabSwitch();
   });
 
   refreshToolbar = setupToolbar(toolbarRoot, crepe, () => activeFilePath);
@@ -86,6 +91,9 @@ window.addEventListener("DOMContentLoaded", async () => {
   await listen("menu-file-save-as", () => void tabManager.saveAs());
   await listen("menu-edit-undo", () => runUndo(crepe));
   await listen("menu-edit-redo", () => runRedo(crepe));
+  await listen("menu-edit-find", () => crepe.editor.action((ctx) => showFindBar(ctx)));
+  await listen("menu-edit-replace", () => crepe.editor.action((ctx) => showReplaceBar(ctx)));
+  await listen("menu-edit-select-all", () => runSelectAll(crepe));
   await listen("menu-insert-table", () => runInsertTable(crepe));
   await listen("menu-insert-image", () =>
     crepe.editor.action((ctx) => void insertImageFromClipboardOrDialog(ctx, () => activeFilePath))

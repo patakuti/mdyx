@@ -528,6 +528,65 @@ math-field::part(menu-toggle) {
   background-color: rgba(0, 0, 0, 0.08);
 }
 
+.find-replace-bar {
+  position: fixed;
+  top: 8px;
+  right: 24px;
+  z-index: 250;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background-color: #ffffff;
+  color: #0f0f0f;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.find-replace-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.find-replace-input {
+  width: 200px;
+  box-sizing: border-box;
+  padding: 4px 6px;
+  font-size: 13px;
+  border: 1px solid #cccccc;
+  border-radius: 4px;
+  color: inherit;
+  background: transparent;
+}
+
+.find-replace-count {
+  min-width: 64px;
+  font-size: 12px;
+  color: #666666;
+  text-align: center;
+}
+
+.find-replace-row button {
+  padding: 4px 8px;
+  border: 1px solid #999999;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+/* `prosemirror-search`が付与する固定クラス名(02_design.md 22.1節・22.5節)。
+   本文テーマ(theme/配下)とは独立した、アプリ側UIとしての固定色。 */
+.ProseMirror-search-match {
+  background-color: rgba(255, 212, 0, 0.35);
+}
+
+.ProseMirror-active-search-match {
+  background-color: rgba(255, 140, 0, 0.6);
+}
+
 /* Crepeのブロックハンドル(milkdown-block-handle)は「+」ボタン(1番目のoperation-item)
    とドラッグ/操作メニューハンドル(2番目)を常に両方描画し、個別非表示の設定は無い
    (feature/block-edit/handle/component.tsx確認済み)。「+」のみCSSで非表示にする
@@ -567,5 +626,27 @@ math-field::part(menu-toggle) {
 
   .editor-context-menu button:hover {
     background-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .find-replace-bar {
+    background-color: #2f2f2f;
+    color: #f6f6f6;
+  }
+
+  .find-replace-input {
+    border-color: #555555;
+    background-color: #262626;
+  }
+
+  .find-replace-count {
+    color: #aaaaaa;
+  }
+
+  .find-replace-row button {
+    border-color: #666666;
+  }
+
+  .ProseMirror-active-search-match {
+    background-color: rgba(255, 160, 40, 0.75);
   }
 }
