@@ -17,7 +17,7 @@ MDyX lets you edit plain Markdown files with a WYSIWYM ("What You See Is What Yo
 - Tabbed editing of multiple Markdown files, with your open tabs and window layout restored the next time you launch the app.
 - Single-instance: launching MDyX while it's already running (e.g. `mdyx some-file.md` from a terminal) opens that file as a new tab in the existing window instead of starting a second copy — see [Command line](#command-line) below.
 - Tables with merged cells and math formulas, edited directly in place, plus PlantUML/Mermaid diagrams rendered inline from their source — no more toggling between raw Markdown and a preview pane.
-- Everything round-trips through the clipboard: copy a table into a spreadsheet and back, and it's still a table. Same for diagrams and images.
+- Everything round-trips through the clipboard: copy a table into a spreadsheet and back, and it's still a table. Same for diagrams and images. Hover over (or select) an image/PlantUML/Mermaid node to see a small badge identifying what it is, and copying one shows a toast confirming exactly what was written to the clipboard.
 - Images are always referenced by path or URL, never embedded as binary data.
 - The saved file is plain, ordinary Markdown, readable by any other tool.
 - Export to a styled, standalone HTML file (or straight to PDF via your browser's Print dialog), with a theme you can customize — see [Export](#export) below for details.

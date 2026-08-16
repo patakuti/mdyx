@@ -5,6 +5,7 @@ import { NodeSelection, Plugin } from "@milkdown/prose/state";
 
 import { plantumlSchema, insertPlantumlNode, extractPlantumlSource } from "../editor/nodes/plantuml";
 import { prosePrepend } from "./prose-prepend";
+import { showCopiedToast } from "../ui/toast";
 
 function isPlantumlNodeSelected(ctx: Ctx): boolean {
   const view = ctx.get(editorViewCtx);
@@ -43,7 +44,9 @@ export const plantumlClipboardPlugin = prosePrepend((ctx) => {
           const view = ctx.get(editorViewCtx);
           const { selection } = view.state;
           if (selection instanceof NodeSelection) {
-            void invoke("write_clipboard_text", { text: selection.node.attrs.source as string });
+            const source = selection.node.attrs.source as string;
+            void invoke("write_clipboard_text", { text: source });
+            showCopiedToast("PlantUML source", source);
           }
           return true;
         },

@@ -21,6 +21,18 @@ function createPlantumlNodeView(
   const dom = document.createElement("div");
   dom.className = "plantuml-node";
 
+  // The rendered SVG/status text is written into this child element rather
+  // than `dom` itself (01_requirements.md 3.14節): `dom` also hosts the
+  // node-type badge below, and `dom.innerHTML`/`dom.textContent` would wipe
+  // it out on every re-render.
+  const content = document.createElement("div");
+  dom.appendChild(content);
+
+  const badge = document.createElement("span");
+  badge.className = "node-type-badge";
+  badge.textContent = "PlantUML";
+  dom.appendChild(badge);
+
   let renderToken = 0;
   let lastRenderedSvg = "";
   let lastRenderedSource = "";
@@ -28,14 +40,14 @@ function createPlantumlNodeView(
   function showSvg(svg: string): void {
     lastRenderedSvg = svg;
     dom.classList.remove("plantuml-node-error");
-    dom.innerHTML = svg;
+    content.innerHTML = svg;
   }
 
   async function render(source: string): Promise<void> {
     lastRenderedSource = source;
     const token = ++renderToken;
     dom.classList.remove("plantuml-node-error");
-    dom.textContent = "Rendering...";
+    content.textContent = "Rendering...";
     try {
       const { plantumlServerUrl } = await getConfig();
       const svg = await invoke<string>("render_plantuml", {
@@ -60,7 +72,7 @@ function createPlantumlNodeView(
     } catch (error) {
       if (token !== renderToken) return;
       dom.classList.add("plantuml-node-error");
-      dom.textContent = `PlantUML render failed: ${String(error)}`;
+      content.textContent = `PlantUML render failed: ${String(error)}`;
     }
   }
 

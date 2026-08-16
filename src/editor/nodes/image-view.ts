@@ -34,25 +34,40 @@ import type { ActiveFilePathGetter } from "../../clipboard/image-paste";
 export function createImageView(getActiveFilePath: ActiveFilePathGetter) {
   return $view(imageSchema.node, () => {
     return (initialNode: PMNode): NodeView => {
-      const dom = document.createElement("img");
-      dom.alt = initialNode.attrs.alt as string;
-      dom.title = (initialNode.attrs.title as string) || "";
+      // Wrapped in a `<span>` (01_requirements.md 3.14節) rather than
+      // returning the `<img>` itself as `dom`, so a node-type badge can sit
+      // alongside it — an `<img>` can't have element children. `.image-node`
+      // (styles.css) is `display: inline-block`, keeping the image inline
+      // with surrounding text exactly as before.
+      const dom = document.createElement("span");
+      dom.className = "image-node";
+
+      const img = document.createElement("img");
+      img.alt = initialNode.attrs.alt as string;
+      img.title = (initialNode.attrs.title as string) || "";
       // A failed load of the resolved `asset://`/`http://` URL below (wrong
       // path, missing file, ...) doesn't reject the `resolveSrc` promise —
-      // resolution itself already succeeded by the time `dom.src` is set,
+      // resolution itself already succeeded by the time `img.src` is set,
       // the *browser's own fetch of that URL* is what can still fail, later
       // and asynchronously. WebKitGTK was observed to render nothing at all
       // for that case (not even the classic broken-image icon a plain
       // `http://`/relative 404 shows) — so without this listener, a bad
       // path silently disappears instead of surfacing as a visible error
       // the way plantuml-view.ts/mermaid-view.ts already do for their own
-      // render failures.
-      dom.addEventListener("error", () => {
+      // render failures. The placeholder box (`.image-node-error`) is
+      // applied to the wrapper, not the (still invisible) `<img>` itself.
+      img.addEventListener("error", () => {
         dom.classList.add("image-node-error");
       });
-      dom.addEventListener("load", () => {
+      img.addEventListener("load", () => {
         dom.classList.remove("image-node-error");
       });
+      dom.appendChild(img);
+
+      const badge = document.createElement("span");
+      badge.className = "node-type-badge";
+      badge.textContent = "Image";
+      dom.appendChild(badge);
 
       let renderToken = 0;
       let lastResolvedSrc = "";
@@ -63,11 +78,11 @@ export function createImageView(getActiveFilePath: ActiveFilePathGetter) {
         try {
           const resolved = await resolveImageDisplaySrc(src, getActiveFilePath);
           if (token !== renderToken) return;
-          dom.src = resolved;
+          img.src = resolved;
         } catch (error) {
           if (token !== renderToken) return;
           dom.classList.add("image-node-error");
-          dom.alt = `Image failed to resolve: ${String(error)}`;
+          img.alt = `Image failed to resolve: ${String(error)}`;
         }
       }
 
@@ -77,8 +92,8 @@ export function createImageView(getActiveFilePath: ActiveFilePathGetter) {
         dom,
         update: (node) => {
           if (node.type !== initialNode.type) return false;
-          dom.alt = node.attrs.alt as string;
-          dom.title = (node.attrs.title as string) || "";
+          img.alt = node.attrs.alt as string;
+          img.title = (node.attrs.title as string) || "";
           if (node.attrs.src !== lastResolvedSrc) void resolveSrc(node.attrs.src as string);
           return true;
         },

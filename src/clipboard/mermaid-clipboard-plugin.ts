@@ -5,6 +5,7 @@ import { NodeSelection, Plugin } from "@milkdown/prose/state";
 
 import { mermaidSchema, insertMermaidNode, extractMermaidSource } from "../editor/nodes/mermaid";
 import { prosePrepend } from "./prose-prepend";
+import { showCopiedToast } from "../ui/toast";
 
 function isMermaidNodeSelected(ctx: Ctx): boolean {
   const view = ctx.get(editorViewCtx);
@@ -38,6 +39,7 @@ export const mermaidClipboardPlugin = prosePrepend((ctx) => {
           if (selection instanceof NodeSelection) {
             const source = selection.node.attrs.source as string;
             void invoke("write_clipboard_text", { text: "```mermaid\n" + source + "\n```" });
+            showCopiedToast("Mermaid source", source);
           }
           return true;
         },

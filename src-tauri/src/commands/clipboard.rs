@@ -149,17 +149,21 @@ pub fn resolve_image_display_path(src: String, current_file_path: Option<String>
     path_resolver::resolve_for_copy(&src, base_dir.as_deref())
 }
 
+/// Returns the resolved absolute path written to the clipboard, so the
+/// frontend can show it back to the user (01_requirements.md 5.7節,
+/// clipboard/image-paste.ts's `copyImagePath`).
 #[tauri::command]
 pub fn copy_image_path(
     app: tauri::AppHandle,
     src: String,
     current_file_path: Option<String>,
-) -> Result<(), String> {
+) -> Result<String, String> {
     let base_dir = base_dir_of(&current_file_path);
     let absolute = path_resolver::resolve_for_copy(&src, base_dir.as_deref());
     app.clipboard()
-        .write_text(absolute)
-        .map_err(|e| e.to_string())
+        .write_text(absolute.clone())
+        .map_err(|e| e.to_string())?;
+    Ok(absolute)
 }
 
 /// Generic text write, used where the frontend already knows exactly what
