@@ -3,7 +3,7 @@ import type { Ctx } from "@milkdown/ctx";
 import { editorViewCtx } from "@milkdown/core";
 import { callCommand } from "@milkdown/utils";
 import { lift, setBlockType } from "@milkdown/prose/commands";
-import type { EditorState } from "@milkdown/prose/state";
+import { AllSelection, type EditorState } from "@milkdown/prose/state";
 import type { MarkType, NodeType } from "@milkdown/prose/model";
 import { mathInlineSchema, insertMathNode } from "../editor/nodes/math";
 import { insertPlantumlNodeFromClipboard } from "../editor/nodes/plantuml";
@@ -384,4 +384,16 @@ export function runUndo(crepe: Crepe): void {
 
 export function runRedo(crepe: Crepe): void {
   crepe.editor.action(callCommand(redoCommand.key));
+}
+
+/// Shared by the Edit menu's "Select All" item and the editor context
+/// menu's (01_requirements.md 3.13節) — `Ctrl/Cmd+A` itself is left as the
+/// browser's native contenteditable behavior rather than a native menu
+/// accelerator, so this only needs to cover the click path.
+export function runSelectAll(crepe: Crepe): void {
+  crepe.editor.action((ctx) => {
+    const view = ctx.get(editorViewCtx);
+    view.dispatch(view.state.tr.setSelection(new AllSelection(view.state.doc)));
+    view.focus();
+  });
 }

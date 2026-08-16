@@ -4,7 +4,7 @@ import { NodeSelection } from "@milkdown/prose/state";
 import type { Crepe } from "@milkdown/crepe";
 import type { EditorView } from "@milkdown/prose/view";
 
-import { runUndo, runRedo } from "../toolbar/tool-bar";
+import { runUndo, runRedo, runSelectAll } from "../toolbar/tool-bar";
 
 interface MenuItem {
   label: string;
@@ -112,6 +112,7 @@ function buildItems(crepe: Crepe): MenuItem[] {
         });
       },
     },
+    { label: "Select All", run: () => runSelectAll(crepe) },
     { label: "Undo", run: () => runUndo(crepe) },
     { label: "Redo", run: () => runRedo(crepe) },
   ];
@@ -119,8 +120,9 @@ function buildItems(crepe: Crepe): MenuItem[] {
 
 /// Replaces the WebView's (WebKitGTK) native context menu — which includes
 /// items unrelated to this app's concept (Insert Emoji, Font, Insert
-/// Unicode Control Character, Inspect Element) — with a minimal 5-item menu
-/// (01_requirements.md 3.11節, Phase 12).
+/// Unicode Control Character, Inspect Element) — with a minimal menu
+/// (01_requirements.md 3.11節, Phase 12; Select All added in Phase 19,
+/// 3.13節, for discoverability alongside the existing native Ctrl+A).
 ///
 /// Each button prevents the default `mousedown` behavior before running its
 /// command, so clicking it doesn't steal focus/collapse the editor's

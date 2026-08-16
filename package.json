@@ -20,6 +20,7 @@
     "katex": "^0.18.1",
     "mathlive": "^0.110.0",
     "mermaid": "^11.16.1",
+    "prosemirror-search": "^1.1.1",
     "remark-math": "^6.0.0"
   },
   "devDependencies": {

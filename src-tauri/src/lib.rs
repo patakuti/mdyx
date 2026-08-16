@@ -100,9 +100,29 @@ pub fn run() {
 
             let undo_item = MenuItemBuilder::with_id("edit-undo", "&Undo").build(app)?;
             let redo_item = MenuItemBuilder::with_id("edit-redo", "&Redo").build(app)?;
+            let find_item = MenuItemBuilder::with_id("edit-find", "&Find...")
+                .accelerator("CmdOrCtrl+F")
+                .build(app)?;
+            let replace_item = MenuItemBuilder::with_id("edit-replace", "&Replace...")
+                .accelerator("CmdOrCtrl+H")
+                .build(app)?;
+            // No accelerator: `Ctrl/Cmd+A` is left as the browser's native
+            // contenteditable behavior (01_requirements.md 3.13節) — a
+            // native menu accelerator would take priority over it even when
+            // a dialog's own text input has focus (e.g. this find/replace
+            // bar's own fields), selecting the whole document instead of
+            // the focused input's text. This item exists purely so
+            // "Select All" is discoverable from the menu; the shortcut
+            // itself still works exactly as before.
+            let select_all_item = MenuItemBuilder::with_id("edit-select-all", "Select &All").build(app)?;
             let edit_menu = SubmenuBuilder::new(app, "&Edit")
                 .item(&undo_item)
                 .item(&redo_item)
+                .separator()
+                .item(&find_item)
+                .item(&replace_item)
+                .separator()
+                .item(&select_all_item)
                 .build()?;
 
             let insert_table_item = MenuItemBuilder::with_id("insert-table", "&Table")
@@ -174,6 +194,9 @@ pub fn run() {
                     "file-save-as" => Some("menu-file-save-as"),
                     "edit-undo" => Some("menu-edit-undo"),
                     "edit-redo" => Some("menu-edit-redo"),
+                    "edit-find" => Some("menu-edit-find"),
+                    "edit-replace" => Some("menu-edit-replace"),
+                    "edit-select-all" => Some("menu-edit-select-all"),
                     "insert-table" => Some("menu-insert-table"),
                     "insert-image" => Some("menu-insert-image"),
                     "insert-plantuml" => Some("menu-insert-plantuml"),
