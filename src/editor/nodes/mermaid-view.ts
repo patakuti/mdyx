@@ -26,6 +26,18 @@ function createMermaidNodeView(
   const dom = document.createElement("div");
   dom.className = "mermaid-node";
 
+  // The rendered SVG/status text is written into this child element rather
+  // than `dom` itself (01_requirements.md 3.14節): `dom` also hosts the
+  // node-type badge below, and `dom.innerHTML`/`dom.textContent` would wipe
+  // it out on every re-render.
+  const content = document.createElement("div");
+  dom.appendChild(content);
+
+  const badge = document.createElement("span");
+  badge.className = "node-type-badge";
+  badge.textContent = "Mermaid";
+  dom.appendChild(badge);
+
   let renderToken = 0;
   let lastRenderedSvg = "";
   let lastRenderedSource = "";
@@ -33,14 +45,14 @@ function createMermaidNodeView(
   function showSvg(svg: string): void {
     lastRenderedSvg = svg;
     dom.classList.remove("mermaid-node-error");
-    dom.innerHTML = svg;
+    content.innerHTML = svg;
   }
 
   async function render(source: string): Promise<void> {
     lastRenderedSource = source;
     const token = ++renderToken;
     dom.classList.remove("mermaid-node-error");
-    dom.textContent = "Rendering...";
+    content.textContent = "Rendering...";
     try {
       const { svg } = await mermaid.render(`mermaid-${nextRenderId++}`, source);
       if (token !== renderToken) return;
@@ -62,7 +74,7 @@ function createMermaidNodeView(
     } catch (error) {
       if (token !== renderToken) return;
       dom.classList.add("mermaid-node-error");
-      dom.textContent = `Mermaid render failed: ${String(error)}`;
+      content.textContent = `Mermaid render failed: ${String(error)}`;
     }
   }
 

@@ -239,6 +239,10 @@ body {
   background-color: #b8860b;
 }
 
+.toast-info {
+  background-color: #2f5d8a;
+}
+
 .math-inline-node {
   display: inline-block;
 }
@@ -310,6 +314,7 @@ math-field::part(menu-toggle) {
 }
 
 .plantuml-node {
+  position: relative;
   margin: 8px 0;
   padding: 8px;
   border: 1px solid transparent;
@@ -352,6 +357,7 @@ math-field::part(menu-toggle) {
 }
 
 .mermaid-node {
+  position: relative;
   margin: 8px 0;
   padding: 8px;
   border: 1px solid transparent;
@@ -393,6 +399,11 @@ math-field::part(menu-toggle) {
   }
 }
 
+.image-node {
+  position: relative;
+  display: inline-block;
+}
+
 /* A failed <img> load (bad path, missing file) otherwise renders as
    nothing at all in this app's WebView — see image-view.ts's `error`
    listener doc comment — so this gives it a visible footprint (min-size +
@@ -410,6 +421,37 @@ math-field::part(menu-toggle) {
     border-color: #e57368;
     background-color: rgba(229, 115, 104, 0.12);
   }
+}
+
+/* 01_requirements.md 3.14節: image/PlantUML/Mermaid nodes all render as just
+   their end result (a picture, or an SVG) with no visible clue to which
+   node type produced it. Shown only on hover or while selected — not a
+   permanent fixture of the document — so it stays out of the way otherwise
+   (same "reveal only while interacting" idiom as .math-mode-toggle above).
+   Fixed, theme-independent colors on purpose (23.1節): this is an app UI
+   affordance layered on top of the content, not part of the document's own
+   themeable appearance. */
+.node-type-badge {
+  display: none;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  padding: 1px 6px;
+  font-size: 10px;
+  line-height: 1.5;
+  color: #ffffff;
+  background-color: rgba(0, 0, 0, 0.6);
+  border-radius: 3px;
+  pointer-events: none;
+}
+
+.image-node:hover .node-type-badge,
+.image-node.ProseMirror-selectednode .node-type-badge,
+.plantuml-node:hover .node-type-badge,
+.plantuml-node.ProseMirror-selectednode .node-type-badge,
+.mermaid-node:hover .node-type-badge,
+.mermaid-node.ProseMirror-selectednode .node-type-badge {
+  display: inline-block;
 }
 
 .settings-overlay {

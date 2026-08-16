@@ -5,7 +5,7 @@ import { callCommand } from "@milkdown/utils";
 import { insertImageCommand, imageSchema } from "@milkdown/preset-commonmark";
 import { NodeSelection } from "@milkdown/prose/state";
 
-import { showToast } from "../ui/toast";
+import { showToast, showCopiedToast } from "../ui/toast";
 
 /// Returns the file path of whichever tab's content is currently loaded
 /// into the (single, shared) `EditorView` — see tabs/tab-manager.ts. Image
@@ -93,8 +93,9 @@ export async function copyImagePath(ctx: Ctx, getActiveFilePath: ActiveFilePathG
   }
   const src = selection.node.attrs.src as string;
 
-  await invoke("copy_image_path", {
+  const absolutePath = await invoke<string>("copy_image_path", {
     src,
     currentFilePath: getActiveFilePath(),
   });
+  showCopiedToast("image path", absolutePath);
 }

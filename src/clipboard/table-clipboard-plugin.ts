@@ -15,6 +15,7 @@ import {
 } from "../editor/markdown-io/html-table";
 import { insertTableNode } from "./table-insert";
 import { prosePrepend } from "./prose-prepend";
+import { showToast } from "../ui/toast";
 
 /// The document range `[from, to)` of the enclosing `table` node, if the
 /// current selection represents "the whole table" — either a
@@ -56,8 +57,13 @@ function wholeTableRange(state: EditorState, ctx: Ctx): { from: number; to: numb
 /// copy already goes through Rust.
 async function copyWholeTable(ctx: Ctx, table: PMNode): Promise<void> {
   const html = tableNodeToHtml(ctx, table);
-  const plainText = needsHtmlBlock(table) ? html : tableNodeToMarkdown(ctx, table);
+  const isHtmlOnly = needsHtmlBlock(table);
+  const plainText = isHtmlOnly ? html : tableNodeToMarkdown(ctx, table);
   await invoke("write_clipboard_table", { html, plainText });
+  // 01_requirements.md 5.7節: reports the *format* copied, not a content
+  // preview — a table has no single-line representation worth truncating
+  // the way a PlantUML/Mermaid source does (showCopiedToast, ui/toast.ts).
+  showToast(`Copied table as ${isHtmlOnly ? "HTML" : "HTML + Markdown"}`, "info");
 }
 
 /// Replaces the whole selected table with the pasted table
