@@ -1,5 +1,6 @@
 :root {
-  font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+  font-family: Inter, Avenir, Helvetica, Arial, "Noto Sans CJK JP", "Yu Gothic",
+    "Meiryo", "Hiragino Kaku Gothic ProN", sans-serif;
   color: #0f0f0f;
   background-color: #f6f6f6;
 
