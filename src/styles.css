@@ -155,6 +155,18 @@ body {
   overflow-y: auto;
 }
 
+/* Ctrl+Wheel zoom (01_requirements.md 3.15節, 02_design.md 24.1節).
+   `zoom` (not `transform: scale`) so the layout itself is recomputed —
+   tables, KaTeX math, and line-wrap positions all scale along with text
+   instead of just being blown up visually. Lives here (the app-chrome
+   stylesheet, index.html-only) rather than theme/base.css, which is also
+   reused for Export's static HTML (theme/theme-style.ts's `fullCss`) where
+   a live zoom level has no meaning. `--mdyx-zoom` is set by
+   `editor/zoom.ts`; the `1` fallback keeps this a no-op before that runs. */
+.mdyx-content {
+  zoom: var(--mdyx-zoom, 1);
+}
+
 @media (prefers-color-scheme: dark) {
   #toolbar-root {
     background-color: #262626;

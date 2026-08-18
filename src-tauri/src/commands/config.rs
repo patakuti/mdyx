@@ -16,6 +16,10 @@ fn default_theme() -> String {
     DEFAULT_THEME.to_string()
 }
 
+fn default_zoom_level() -> u32 {
+    100
+}
+
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Config {
@@ -62,6 +66,15 @@ pub struct Config {
     /// looking for one is the closer fit here (01_requirements.md 10.6節).
     #[serde(default)]
     pub last_css_dir: Option<String>,
+    /// Editor display zoom level as a percentage (01_requirements.md
+    /// 3.15節, 02_design.md 24.4節), shared across all tabs like `theme`
+    /// rather than per-document. Saved once at app exit (`save_zoom_level`
+    /// below), not on every `Ctrl+Wheel` tick — mirrors `window_x`/etc.
+    /// above (saved once at `CloseRequested`) rather than `theme` (saved
+    /// immediately on change), since a zoom level changes far more often
+    /// than a theme choice.
+    #[serde(default = "default_zoom_level")]
+    pub zoom_level: u32,
 }
 
 impl Default for Config {
@@ -78,6 +91,7 @@ impl Default for Config {
             theme: default_theme(),
             custom_css_path: None,
             last_css_dir: None,
+            zoom_level: default_zoom_level(),
         }
     }
 }
@@ -140,6 +154,17 @@ pub fn save_open_tabs(
     let mut config = get_config(app.clone())?;
     config.open_tabs = open_tabs;
     config.active_tab_index = active_tab_index;
+    save_config(app, config)
+}
+
+/// Called once, right before the app actually exits (main.ts's
+/// `handleCloseRequested`, same point `save_open_tabs` is called from) —
+/// not on every `Ctrl+Wheel` tick, to avoid a stream of IPC calls while the
+/// user is actively zooming (02_design.md 24.4節).
+#[tauri::command]
+pub fn save_zoom_level(app: tauri::AppHandle, zoom_level: u32) -> Result<(), String> {
+    let mut config = get_config(app.clone())?;
+    config.zoom_level = zoom_level;
     save_config(app, config)
 }
 

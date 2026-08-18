@@ -18,6 +18,7 @@ MDyX lets you edit plain Markdown files with a WYSIWYM ("What You See Is What Yo
 - Single-instance: launching MDyX while it's already running (e.g. `mdyx some-file.md` from a terminal) opens that file as a new tab in the existing window instead of starting a second copy — see [Command line](#command-line) below.
 - Tables with merged cells and math formulas, edited directly in place, plus PlantUML/Mermaid diagrams rendered inline from their source — no more toggling between raw Markdown and a preview pane.
 - Everything round-trips through the clipboard: copy a table into a spreadsheet and back, and it's still a table. Same for diagrams and images. Hover over (or select) an image/PlantUML/Mermaid node to see a small badge identifying what it is, and copying one shows a toast confirming exactly what was written to the clipboard.
+- `Ctrl+Wheel` zooms the whole document in/out (50%–200%), text/tables/math/diagrams alike — see [Zoom](#zoom) below.
 - Images are always referenced by path or URL, never embedded as binary data.
 - The saved file is plain, ordinary Markdown, readable by any other tool.
 - Export to a styled, standalone HTML file (or straight to PDF via your browser's Print dialog), with a theme you can customize — see [Export](#export) below for details.
@@ -73,6 +74,12 @@ MDyX lets you edit plain Markdown files with a WYSIWYM ("What You See Is What Yo
 - **Replace**: `Ctrl/Cmd+H`, or Edit > Replace..., adds a replacement field to the same bar. Replace swaps the current match and moves to the next one; Replace All rewrites every match at once (undo it like any other edit — there's no separate confirmation).
 - Matching is plain substring, case-insensitive; there's no regular-expression mode.
 - **Select All**: `Ctrl/Cmd+A` already works everywhere text is editable (it's the browser's own behavior). Edit > Select All and the editor's right-click menu add an explicit entry for it too, since neither menu had one before.
+
+### Zoom
+
+- `Ctrl+Wheel` over the document zooms in/out, in 10% steps between 50% and 200% — text, tables, math, and PlantUML/Mermaid diagrams all scale together, since it resizes the layout itself rather than just stretching a rendered image. The level is shared across all tabs and remembered between launches.
+- View > Zoom In / Zoom Out / Reset Zoom does the same by clicking, for anyone who'd rather not use the wheel.
+- **Known limitation (Linux, confirmed by hand on WebKitGTK)**: the keyboard shortcuts shown next to those menu items (`Ctrl+=` / `Ctrl+-` / `Ctrl+0`) don't actually work — WebKitGTK reserves that exact key combination for its own built-in page zoom and consumes the keypress before it ever reaches MDyX, so neither the native menu shortcut nor the app's own key handling can see it. `Ctrl+Wheel` itself is unaffected by this and works normally; only these three keyboard shortcuts are impacted. Use the menu click instead. Windows/macOS behavior hasn't been verified yet.
 
 ### Export
 
