@@ -5,6 +5,7 @@ import { tableCellSchema, tableHeaderSchema } from "@milkdown/preset-gfm";
 import { $prose } from "@milkdown/utils";
 import { Plugin } from "@milkdown/prose/state";
 import type { EditorView } from "@milkdown/prose/view";
+import type { DeriveContext } from "@milkdown/kit/plugin/block";
 import { search } from "prosemirror-search";
 
 import "@milkdown/crepe/theme/common/style.css";
@@ -114,11 +115,49 @@ function createToolbarSyncPlugin(onEditorUpdate: (view: EditorView) => void) {
 // and image-paste.ts's `ActiveFilePathGetter`. `setupEditor` runs before the
 // `TabManager` exists (it needs a `Crepe` instance to wrap), so the caller
 // passes a getter closure instead of a plain value.
+// Minimum on-screen clearance (px) the block drag handle needs to its
+// left, measured in a real browser (32px handle width + 16px `getOffset()`
+// gap, `handle/index.ts`) — the same figure `styles.css`'s `#editor-root`
+// gutter padding is sized from (01_requirements.md 3.16節, 02_design.md
+// 25章/26章).
+const BLOCK_HANDLE_GUTTER_WIDTH = 48;
+
+/// Creates the block handle's floating-ui mount point (Phase 22,
+/// 01_requirements.md 3.16節, 02_design.md 26章). By default the handle
+/// mounts into `view.dom.parentElement` (`.milkdown`), which lives *inside*
+/// `#editor-root`'s horizontally-scrolling viewport (styles.css) — so it
+/// scrolls away with the document instead of staying in its fixed gutter,
+/// reported by real usage after Phase 22's initial ship ("scrolling right
+/// pushes the handle off-screen too"). `position: sticky; left: 0` here
+/// pins this element to `#editor-root`'s own left edge regardless of its
+/// `scrollLeft` — `width/height: 0` with `overflow: visible` keeps it out
+/// of `.milkdown`'s layout box entirely (a common sticky-badge technique)
+/// so it doesn't shift `.mdyx-content`'s centering. `position: sticky`
+/// still establishes a containing block for its absolutely-positioned
+/// children (same as `relative`), which is all `BlockProvider` needs from
+/// a `root` element (`node_modules/@milkdown/plugin-block/src/block-
+/// provider.ts`'s `#init()` just calls `root.appendChild`).
+function createBlockHandleGutter(root: HTMLElement): HTMLElement {
+  const gutter = document.createElement("div");
+  // `milkdown`, not just our own class: `@milkdown/crepe/theme/common/*.css`
+  // scopes every rule the handle needs (`position: absolute`, `display:
+  // flex`, icon sizing, colors, ...) behind a `.milkdown <descendant>`
+  // selector — found missing in testing: without this class, none of that
+  // CSS matched once the handle moved outside the real `.milkdown` wrapper
+  // (`position` computed as `static`, width collapsed to 0). `.milkdown`
+  // itself is just a reset/base scoping class (`theme/common/reset.css`)
+  // safe to duplicate onto another element.
+  gutter.className = "milkdown mdyx-block-handle-gutter";
+  root.insertBefore(gutter, root.firstChild);
+  return gutter;
+}
+
 export async function setupEditor(
   root: HTMLElement,
   getActiveFilePath: ActiveFilePathGetter,
   onEditorUpdate: (view: EditorView) => void
 ): Promise<Crepe> {
+  const blockHandleGutter = createBlockHandleGutter(root);
   const crepe = new Crepe({
     root,
     // No placeholder document (Phase 9, 01_requirements.md 3.5節): the app
@@ -160,6 +199,41 @@ export async function setupEditor(
       // contenteditable caret, which isn't a positioned DOM node at all and
       // renders correctly under `zoom` (confirmed on the same hardware).
       [Crepe.Feature.Cursor]: { virtual: false },
+      // Mounts the block drag handle into `blockHandleGutter` (fixed to
+      // `#editor-root`'s left edge, see `createBlockHandleGutter` above)
+      // instead of its default `view.dom.parentElement`, so it no longer
+      // scrolls away with the document.
+      [Crepe.Feature.BlockEdit]: {
+        blockHandle: {
+          root: blockHandleGutter,
+          // floating-ui still places the handle `getOffset()`'s 16px to
+          // the left of the *actual* (possibly scrolled far off-screen)
+          // block position — moving its mount point above isn't enough by
+          // itself, since a fully off-screen reference block would still
+          // compute a wildly negative target position. Clamping the
+          // reference position's left edge to never read further left
+          // than `root`'s own (unscrolled) left edge keeps the handle
+          // inside the visible gutter even while the document is scrolled
+          // (only `getPosition`'s x/left/right/width need to make sense
+          // together for floating-ui's `left` placement math — top/bottom
+          // stay untouched so vertical tracking is unaffected).
+          getPosition: ({ active }: DeriveContext) => {
+            const blockRect = active.el.getBoundingClientRect();
+            const rootRect = root.getBoundingClientRect();
+            const left = Math.max(blockRect.left, rootRect.left + BLOCK_HANDLE_GUTTER_WIDTH);
+            return {
+              x: left,
+              y: blockRect.y,
+              width: blockRect.width,
+              height: blockRect.height,
+              top: blockRect.top,
+              bottom: blockRect.bottom,
+              left,
+              right: left + blockRect.width,
+            };
+          },
+        },
+      },
     },
   });
   crepe.editor.use(createImageClipboardPlugin(getActiveFilePath));
