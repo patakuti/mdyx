@@ -12,6 +12,9 @@ export interface AppConfig {
   /// `"custom"` — in which case `customCssPath` names the CSS file to use.
   theme: string;
   customCssPath: string | null;
+  /// Editor display zoom level as a percentage (Phase 21,
+  /// 01_requirements.md 3.15節). Shared across all tabs, like `theme`.
+  zoomLevel: number;
 }
 
 export function getConfig(): Promise<AppConfig> {
@@ -28,4 +31,10 @@ export function savePlantumlServerUrl(url: string): Promise<void> {
 
 export function saveTheme(theme: string, customCssPath: string | null): Promise<void> {
   return invoke("save_theme", { theme, customCssPath });
+}
+
+/// Called once at app exit (main.ts's `handleCloseRequested`), not on every
+/// `Ctrl+Wheel` tick — see `editor/zoom.ts` and 02_design.md 24.4節.
+export function saveZoomLevel(zoomLevel: number): Promise<void> {
+  return invoke("save_zoom_level", { zoomLevel });
 }

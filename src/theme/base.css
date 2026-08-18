@@ -19,7 +19,13 @@ body {
 }
 
 .mdyx-content {
-  max-width: 980px;
+  /* Divided by the live editor's zoom factor (styles.css's `--mdyx-zoom`,
+     01_requirements.md 3.15節) so the column's *on-screen* width stays the
+     same at any zoom level, instead of growing past the window and pushing
+     left-gutter UI (the block drag handle) off-screen to the left. Export's
+     static HTML never defines `--mdyx-zoom`, so this is exactly 980px
+     there — unchanged from before. */
+  max-width: calc(980px / var(--mdyx-zoom, 1));
   margin: 0 auto;
   padding: 40px 20px;
   line-height: 1.6;

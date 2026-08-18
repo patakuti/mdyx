@@ -1,6 +1,7 @@
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import { editorViewCtx } from "@milkdown/core";
+import type { EditorView } from "@milkdown/prose/view";
 
 import { setupEditor } from "./editor/setup";
 import { setupEditorContextMenu } from "./editor/context-menu";
@@ -15,9 +16,10 @@ import { insertMermaidNodeFromClipboard } from "./editor/nodes/mermaid";
 import { showInsertLinkDialog } from "./editor/insert-link-dialog";
 import { exportToHtmlFile, openExportInBrowser } from "./export/html-export";
 import { openSettingsPanel } from "./settings/settings-panel";
-import { getConfig } from "./settings/config";
+import { getConfig, saveZoomLevel } from "./settings/config";
 import { applyEditorTheme } from "./theme/theme-style";
 import { showToast } from "./ui/toast";
+import { setupZoom, zoomIn, zoomOut, resetZoom, getZoomLevel } from "./editor/zoom";
 
 window.addEventListener("DOMContentLoaded", async () => {
   const editorRoot = document.querySelector<HTMLDivElement>("#editor-root");
@@ -60,6 +62,13 @@ window.addEventListener("DOMContentLoaded", async () => {
   setupEditorContextMenu(editorRoot, crepe);
 
   const config = await getConfig();
+  setupZoom(editorRoot, config.zoomLevel, () => {
+    let view: EditorView | undefined;
+    crepe.editor.action((ctx) => {
+      view = ctx.get(editorViewCtx);
+    });
+    return view;
+  });
   await tabManager.restoreSession(config.openTabs, config.activeTabIndex);
 
   // A file given on this process's own command line (02_design.md 21章) —
@@ -94,6 +103,9 @@ window.addEventListener("DOMContentLoaded", async () => {
   await listen("menu-edit-find", () => crepe.editor.action((ctx) => showFindBar(ctx)));
   await listen("menu-edit-replace", () => crepe.editor.action((ctx) => showReplaceBar(ctx)));
   await listen("menu-edit-select-all", () => runSelectAll(crepe));
+  await listen("menu-view-zoom-in", () => zoomIn());
+  await listen("menu-view-zoom-out", () => zoomOut());
+  await listen("menu-view-zoom-reset", () => resetZoom());
   await listen("menu-insert-table", () => runInsertTable(crepe));
   await listen("menu-insert-image", () =>
     crepe.editor.action((ctx) => void insertImageFromClipboardOrDialog(ctx, () => activeFilePath))
@@ -151,5 +163,6 @@ async function handleCloseRequested(tabManager: TabManager): Promise<void> {
 
   const { openTabs, activeIndex } = tabManager.getSessionSnapshot();
   await invoke("save_open_tabs", { openTabs, activeTabIndex: activeIndex });
+  await saveZoomLevel(getZoomLevel());
   await invoke("confirm_close");
 }

@@ -145,6 +145,22 @@ export async function setupEditor(
       // display resolution — without the promotion.
       [Crepe.Feature.ImageBlock]: false,
     },
+    featureConfigs: {
+      // Crepe's default caret rendering is a custom "virtual cursor"
+      // (`prosemirror-virtual-cursor`, a ProseMirror widget decoration —
+      // i.e. a DOM node inserted directly into the zoomed `.mdyx-content`
+      // subtree) positioned via inline `top`/`left`/`height` styles computed
+      // in real screen pixels (`getBoundingClientRect()` differences). Since
+      // that positioned element is itself a *descendant* of the zoomed
+      // element, the browser applies `zoom` to those inline pixel values a
+      // second time, roughly squaring the offset — reproduced on real
+      // hardware as a caret rendered far to the right of and much taller
+      // than the actual text (01_requirements.md 3.15節, 02_design.md
+      // 24.1節). Disabling `virtual` falls back to the browser's own native
+      // contenteditable caret, which isn't a positioned DOM node at all and
+      // renders correctly under `zoom` (confirmed on the same hardware).
+      [Crepe.Feature.Cursor]: { virtual: false },
+    },
   });
   crepe.editor.use(createImageClipboardPlugin(getActiveFilePath));
   crepe.editor.use(createGeneralImagePastePlugin(getActiveFilePath));

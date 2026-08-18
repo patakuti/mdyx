@@ -66,6 +66,7 @@ pub fn run() {
             commands::config::save_plantuml_server_url,
             commands::config::save_theme,
             commands::config::save_open_tabs,
+            commands::config::save_zoom_level,
             commands::startup::take_startup_file_path,
             confirm_close,
         ])
@@ -125,6 +126,26 @@ pub fn run() {
                 .item(&select_all_item)
                 .build()?;
 
+            // "=" (not "+"): muda's accelerator parser has no bare "+" key
+            // outside the numpad ("NumpadAdd"/`Code::NumpadAdd`, confirmed by
+            // reading `muda`'s `accelerator.rs`), so this instead binds the
+            // physical "="/"+" key — the same key browsers themselves bind
+            // Ctrl+Zoom-In to for exactly this reason (no Shift needed).
+            let zoom_in_item = MenuItemBuilder::with_id("view-zoom-in", "Zoom &In")
+                .accelerator("CmdOrCtrl+=")
+                .build(app)?;
+            let zoom_out_item = MenuItemBuilder::with_id("view-zoom-out", "Zoom &Out")
+                .accelerator("CmdOrCtrl+-")
+                .build(app)?;
+            let zoom_reset_item = MenuItemBuilder::with_id("view-zoom-reset", "&Reset Zoom")
+                .accelerator("CmdOrCtrl+0")
+                .build(app)?;
+            let view_menu = SubmenuBuilder::new(app, "&View")
+                .item(&zoom_in_item)
+                .item(&zoom_out_item)
+                .item(&zoom_reset_item)
+                .build()?;
+
             let insert_table_item = MenuItemBuilder::with_id("insert-table", "&Table")
                 .accelerator("CmdOrCtrl+Alt+T")
                 .build(app)?;
@@ -169,6 +190,7 @@ pub fn run() {
             let menu = MenuBuilder::new(app)
                 .item(&file_menu)
                 .item(&edit_menu)
+                .item(&view_menu)
                 .item(&insert_menu)
                 .item(&export_menu)
                 .item(&settings_menu)
@@ -197,6 +219,9 @@ pub fn run() {
                     "edit-find" => Some("menu-edit-find"),
                     "edit-replace" => Some("menu-edit-replace"),
                     "edit-select-all" => Some("menu-edit-select-all"),
+                    "view-zoom-in" => Some("menu-view-zoom-in"),
+                    "view-zoom-out" => Some("menu-view-zoom-out"),
+                    "view-zoom-reset" => Some("menu-view-zoom-reset"),
                     "insert-table" => Some("menu-insert-table"),
                     "insert-image" => Some("menu-insert-image"),
                     "insert-plantuml" => Some("menu-insert-plantuml"),
