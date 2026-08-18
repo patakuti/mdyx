@@ -116,7 +116,7 @@ npm run tauri build
 
 ### Downloads / CI
 
-Pushing a `vX.Y.Z` tag (or running the [Release workflow](.github/workflows/release.yml) manually from the Actions tab) builds installers for Windows, macOS (universal), and Linux via GitHub Actions and attaches them as a draft [Release](../../releases). Binaries are unsigned, so first launch shows an OS warning: on Windows, click "More info" > "Run anyway" in the SmartScreen dialog; on macOS, right-click the app and choose "Open" (or run `xattr -d com.apple.quarantine <path>`), since it isn't notarized.
+Pushing a `vX.Y.Z` tag builds installers for Windows, macOS (universal), and Linux via GitHub Actions and attaches them as a draft [Release](../../releases). Running the [Release workflow](.github/workflows/release.yml) manually from the Actions tab instead builds the same installers and uploads them as a workflow run [artifact](../../actions/workflows/release.yml) (no Release is created) — use this to get ad-hoc binaries outside of a version bump. Binaries are unsigned, so first launch shows an OS warning: on Windows, click "More info" > "Run anyway" in the SmartScreen dialog; on macOS, right-click the app and choose "Open" (or run `xattr -d com.apple.quarantine <path>`), since it isn't notarized.
 
 ## Built With
 
