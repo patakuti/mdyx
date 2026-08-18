@@ -152,7 +152,80 @@ body {
   display: none;
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
+  overflow: auto;
+  /* Row flex container for its two children — the block handle gutter and
+     `.milkdown` (Crepe's own wrapper, `editor/setup.ts`'s
+     `createBlockHandleGutter` inserts the gutter as `.milkdown`'s sibling
+     before it) — so they occupy genuinely separate columns instead of
+     overlapping layers (01_requirements.md 3.16節, 02_design.md 26.2節).
+     `display: none` above is the hidden-tab state (`tab-bar.ts` swaps this
+     to `"flex"`, not `"block"`, when a tab is open); `flex-direction: row`
+     is the flex default so it isn't declared explicitly. */
+}
+
+/* The block handle's mount point (`editor/setup.ts`'s
+   `createBlockHandleGutter`, 01_requirements.md 3.16節, 02_design.md
+   26章): a real (not zero-width) flex column so the handle and
+   `.mdyx-content`'s text occupy genuinely separate horizontal regions —
+   reported after the first cut of this fix (a zero-width `position:
+   sticky` overlay) still let scrolled-under text visually collide with
+   the handle icon in the same on-screen pixels. `flex-shrink: 0` keeps
+   this column's width fixed even if `#editor-root` itself is narrower
+   than its children's combined width (the same case that makes
+   `#editor-root` scroll horizontally at all).
+   `position: sticky; top: 0; left: 0; height: 100%` pins this column to
+   `#editor-root`'s visible top-left corner on *both* axes, not just
+   horizontally: found in testing that stretching this column's height to
+   match `.milkdown`'s flex cross-size (the first attempt) only covers
+   `#editor-root`'s own *viewport* height, not the full scrolled document
+   — `.milkdown`'s own box doesn't grow to fit `.mdyx-content`'s taller
+   content (default `align-items: stretch` gives it a definite, viewport-
+   bound cross-size; the content simply overflows past it, which is what
+   `#editor-root`'s scrollbar is measuring). That left the gutter's opaque
+   background covering only the first screenful — scrolled further down,
+   there is no gutter behind the handle at all. Pinning to the actual
+   viewport corner instead of trying to span the whole document makes
+   this column always exactly cover the visible left strip, at any scroll
+   position in either direction. The handle's own vertical tracking still
+   comes from `editor/setup.ts`'s `getPosition`/floating-ui recomputing on
+   every hover, unaffected by how this column is sized. */
+.mdyx-block-handle-gutter {
+  flex: 0 0 40px;
+  z-index: 20;
+  position: sticky;
+  top: 0;
+  left: 0;
+  height: 100%;
+}
+
+/* `.mdyx-block-handle-gutter.milkdown`, not just `.mdyx-block-handle-
+   gutter`: this element also carries the library's own `milkdown` class
+   (see `createBlockHandleGutter`'s comment — needed so `@milkdown/crepe`'s
+   own CSS, all scoped under `.milkdown <descendant>` selectors, still
+   matches the handle once it's mounted outside the real `.milkdown`
+   wrapper) so its `position: relative` (`reset.css`) would otherwise win
+   over the rule above — same specificity, later in the cascade. This
+   two-class selector's higher specificity overrides it regardless of
+   stylesheet load order, without having to fight the shared class for
+   every property individually. */
+.mdyx-block-handle-gutter.milkdown {
+  position: sticky;
+}
+
+/* Crepe's own wrapper (`.milkdown`, sibling of `.mdyx-block-handle-gutter`
+   above): fills the rest of `#editor-root`'s row so `.mdyx-content`'s
+   `margin: 0 auto` still centers it in the remaining space when there's
+   room to spare. `:not(.mdyx-block-handle-gutter)` excludes the gutter
+   above, which also carries the `milkdown` class (comment above) and
+   would otherwise match this selector too. `min-width: 0` overrides the
+   flex item default (`min-width: auto`, which refuses to shrink a row
+   item below its content's intrinsic size) — without it, this item's
+   *own* natural width could win a fight with `.mdyx-content`'s `width:
+   980px` in a way that stopped `#editor-root`'s horizontal scrollbar from
+   accounting for the gutter's 40px correctly. */
+#editor-root > .milkdown:not(.mdyx-block-handle-gutter) {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 /* Ctrl+Wheel zoom (01_requirements.md 3.15節, 02_design.md 24.1節).
@@ -165,6 +238,19 @@ body {
    `editor/zoom.ts`; the `1` fallback keeps this a no-op before that runs. */
 .mdyx-content {
   zoom: var(--mdyx-zoom, 1);
+  /* Overrides theme/base.css's `max-width: 980px` to a fixed `width` for
+     the live app only (Phase 22, 01_requirements.md 3.16節, 02_design.md
+     25章): `max-width` alone only caps the upper bound — a block
+     element's default `width: auto` still shrinks to fit a narrower
+     `#editor-root`, which is exactly the "wraps earlier when the window
+     narrows" behavior 3.16節 asks to stop. A fixed `width` holds this
+     column at its natural size regardless of container width, so
+     `#editor-root`'s horizontal scroll (above) — not reflow — absorbs the
+     difference. Kept out of theme/base.css so Export's static HTML keeps
+     `max-width`'s responsive shrink-to-fit instead (e.g. viewed on a
+     phone) — this file is the live-app-only stylesheet (comment above),
+     never loaded by Export. */
+  width: 980px;
 }
 
 @media (prefers-color-scheme: dark) {

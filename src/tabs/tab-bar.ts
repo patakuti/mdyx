@@ -52,7 +52,10 @@ export function setupTabBar(
     }
 
     const hasTabs = tabs.length > 0;
-    editorRoot.style.display = hasTabs ? "block" : "none";
+    // "flex", not "block": `#editor-root` (styles.css) is a row flex
+    // container so the block handle gutter and `.milkdown` occupy
+    // separate columns (01_requirements.md 3.16節, 02_design.md 26章).
+    editorRoot.style.display = hasTabs ? "flex" : "none";
     emptyStateRoot.style.display = hasTabs ? "none" : "flex";
   };
 
