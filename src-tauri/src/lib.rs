@@ -75,21 +75,19 @@ pub fn run() {
             // e.g. Alt+F then O for File > Open) — `muda` (Tauri's native
             // menu backend) turns this into the platform's own underlined
             // access-key convention (01_requirements.md 3.2節, Phase 8).
-            let new_tab_item = MenuItemBuilder::with_id("file-new-tab", "&New Tab")
-                .accelerator("CmdOrCtrl+N")
-                .build(app)?;
-            let open_item = MenuItemBuilder::with_id("file-open", "&Open...")
-                .accelerator("CmdOrCtrl+O")
-                .build(app)?;
-            let save_item = MenuItemBuilder::with_id("file-save", "&Save")
-                .accelerator("CmdOrCtrl+S")
-                .build(app)?;
-            let save_as_item = MenuItemBuilder::with_id("file-save-as", "Save &As...")
-                .accelerator("CmdOrCtrl+Shift+S")
-                .build(app)?;
-            let exit_item = MenuItemBuilder::with_id("file-exit", "E&xit")
-                .accelerator("CmdOrCtrl+Q")
-                .build(app)?;
+            //
+            // No `.accelerator(...)` on this item or several others below
+            // (see each item's own comment): on Windows, WebView2 owns
+            // keyboard focus and these never reach `muda`'s native
+            // accelerator table, so key handling for them lives in
+            // `main.ts`'s own `keydown` listener instead — the menu item
+            // still works by click either way (01_requirements.md 3.17節,
+            // 02_design.md 27章).
+            let new_tab_item = MenuItemBuilder::with_id("file-new-tab", "&New Tab").build(app)?;
+            let open_item = MenuItemBuilder::with_id("file-open", "&Open...").build(app)?;
+            let save_item = MenuItemBuilder::with_id("file-save", "&Save").build(app)?;
+            let save_as_item = MenuItemBuilder::with_id("file-save-as", "Save &As...").build(app)?;
+            let exit_item = MenuItemBuilder::with_id("file-exit", "E&xit").build(app)?;
             let file_menu = SubmenuBuilder::new(app, "&File")
                 .item(&new_tab_item)
                 .item(&open_item)
@@ -101,12 +99,10 @@ pub fn run() {
 
             let undo_item = MenuItemBuilder::with_id("edit-undo", "&Undo").build(app)?;
             let redo_item = MenuItemBuilder::with_id("edit-redo", "&Redo").build(app)?;
-            let find_item = MenuItemBuilder::with_id("edit-find", "&Find...")
-                .accelerator("CmdOrCtrl+F")
-                .build(app)?;
-            let replace_item = MenuItemBuilder::with_id("edit-replace", "&Replace...")
-                .accelerator("CmdOrCtrl+H")
-                .build(app)?;
+            // No accelerator (Windows/WebView2, see the File menu comment
+            // above): handled by `main.ts`'s `keydown` listener instead.
+            let find_item = MenuItemBuilder::with_id("edit-find", "&Find...").build(app)?;
+            let replace_item = MenuItemBuilder::with_id("edit-replace", "&Replace...").build(app)?;
             // No accelerator: `Ctrl/Cmd+A` is left as the browser's native
             // contenteditable behavior (01_requirements.md 3.13節) — a
             // native menu accelerator would take priority over it even when
@@ -146,22 +142,19 @@ pub fn run() {
                 .item(&zoom_reset_item)
                 .build()?;
 
-            let insert_table_item = MenuItemBuilder::with_id("insert-table", "&Table")
-                .accelerator("CmdOrCtrl+Alt+T")
-                .build(app)?;
+            // No accelerators on any of these five (Windows/WebView2, see
+            // the File menu comment above): Table/PlantUML/Mermaid are
+            // handled by their existing toolbar buttons' `shortcut`
+            // (`tool-bar.ts`'s `BUTTON_GROUPS`), Image/Link by `main.ts`'s
+            // (Link: already existing) `keydown` listener.
+            let insert_table_item = MenuItemBuilder::with_id("insert-table", "&Table").build(app)?;
             let insert_image_item =
-                MenuItemBuilder::with_id("insert-image", "&Image (from clipboard path)")
-                    .accelerator("CmdOrCtrl+Shift+I")
-                    .build(app)?;
-            let insert_plantuml_item = MenuItemBuilder::with_id("insert-plantuml", "&PlantUML Diagram")
-                .accelerator("CmdOrCtrl+Alt+U")
-                .build(app)?;
-            let insert_mermaid_item = MenuItemBuilder::with_id("insert-mermaid", "&Mermaid Diagram")
-                .accelerator("CmdOrCtrl+Alt+E")
-                .build(app)?;
-            let insert_link_item = MenuItemBuilder::with_id("insert-link", "&Link...")
-                .accelerator("CmdOrCtrl+K")
-                .build(app)?;
+                MenuItemBuilder::with_id("insert-image", "&Image (from clipboard path)").build(app)?;
+            let insert_plantuml_item =
+                MenuItemBuilder::with_id("insert-plantuml", "&PlantUML Diagram").build(app)?;
+            let insert_mermaid_item =
+                MenuItemBuilder::with_id("insert-mermaid", "&Mermaid Diagram").build(app)?;
+            let insert_link_item = MenuItemBuilder::with_id("insert-link", "&Link...").build(app)?;
             let insert_menu = SubmenuBuilder::new(app, "&Insert")
                 .item(&insert_table_item)
                 .item(&insert_image_item)

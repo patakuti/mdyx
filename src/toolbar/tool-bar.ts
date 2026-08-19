@@ -135,7 +135,7 @@ function toggleCodeBlock(ctx: Ctx): void {
 // e.g. Ctrl+Shift+8 (Bullet List) matches regardless of what character
 // Shift+8 produces on the active keyboard layout (on a US layout
 // `event.key` would be "*", not "8", once Shift is held).
-interface ToolbarShortcut {
+export interface ToolbarShortcut {
   code: string;
   ctrl?: boolean;
   shift?: boolean;
@@ -158,9 +158,10 @@ interface ToolbarButton {
 // binding; everything else (LyX has no direct equivalent — headings/lists/
 // quote/code block/table/etc. are all done via LyX's Environment/layout
 // system instead of per-element toggles) uses a common Markdown/word
-// processor convention. Insert Table/Image/PlantUML aren't listed here even
-// though they're in that table: they're native menu items, so their
-// accelerators are set directly in `lib.rs` instead (02_design.md 8章).
+// processor convention. Insert Table/PlantUML/Mermaid have their `shortcut`
+// set here (not just a native menu accelerator in `lib.rs`) because the
+// native accelerator alone doesn't work on Windows/WebView2
+// (01_requirements.md 3.17節, 02_design.md 27章).
 const BUTTON_GROUPS: ToolbarButton[][] = [
   [
     { label: "↶", title: "Undo", action: (c) => c.editor.action(callCommand(undoCommand.key)) },
@@ -282,7 +283,12 @@ const BUTTON_GROUPS: ToolbarButton[][] = [
       action: (c) => c.editor.action(callCommand(insertHrCommand.key)),
       shortcut: { code: "KeyH", ctrl: true, alt: true },
     },
-    { label: "⊞", title: "Insert Table (Ctrl+Alt+T)", action: (c) => runInsertTable(c) },
+    {
+      label: "⊞",
+      title: "Insert Table (Ctrl+Alt+T)",
+      action: (c) => runInsertTable(c),
+      shortcut: { code: "KeyT", ctrl: true, alt: true },
+    },
     { label: "⊔", title: "Merge Cells", action: (c) => c.editor.action(mergeSelectedCells) },
     { label: "⊓", title: "Split Cell", action: (c) => c.editor.action(splitSelectedCell) },
   ],
@@ -298,12 +304,14 @@ const BUTTON_GROUPS: ToolbarButton[][] = [
       title: "Insert PlantUML (Ctrl+Alt+U)",
       className: "tb-mono",
       action: (c) => c.editor.action((ctx) => void insertPlantumlNodeFromClipboard(ctx.get(editorViewCtx))),
+      shortcut: { code: "KeyU", ctrl: true, alt: true },
     },
     {
       label: "ME",
       title: "Insert Mermaid (Ctrl+Alt+E)",
       className: "tb-mono",
       action: (c) => c.editor.action((ctx) => void insertMermaidNodeFromClipboard(ctx.get(editorViewCtx))),
+      shortcut: { code: "KeyE", ctrl: true, alt: true },
     },
     {
       label: "Link",
@@ -314,7 +322,7 @@ const BUTTON_GROUPS: ToolbarButton[][] = [
   ],
 ];
 
-function matchesShortcut(event: KeyboardEvent, shortcut: ToolbarShortcut): boolean {
+export function matchesShortcut(event: KeyboardEvent, shortcut: ToolbarShortcut): boolean {
   return (
     event.code === shortcut.code &&
     (event.ctrlKey || event.metaKey) === Boolean(shortcut.ctrl) &&
