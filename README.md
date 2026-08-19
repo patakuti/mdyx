@@ -81,6 +81,28 @@ MDyX lets you edit plain Markdown files with a WYSIWYM ("What You See Is What Yo
 - View > Zoom In / Zoom Out / Reset Zoom does the same by clicking, for anyone who'd rather not use the wheel.
 - **Known limitation (Linux, confirmed by hand on WebKitGTK)**: the keyboard shortcuts shown next to those menu items (`Ctrl+=` / `Ctrl+-` / `Ctrl+0`) don't actually work — WebKitGTK reserves that exact key combination for its own built-in page zoom and consumes the keypress before it ever reaches MDyX, so neither the native menu shortcut nor the app's own key handling can see it. `Ctrl+Wheel` itself is unaffected by this and works normally; only these three keyboard shortcuts are impacted. Use the menu click instead. Windows/macOS behavior hasn't been verified yet.
 
+### Keyboard shortcuts
+
+Menu items no longer show a shortcut hint string next to their label (e.g. "Save    Ctrl+S") — this used to come from Tauri's native menu `accelerator`, which turned out not to work at all on Windows (see below), so shortcut handling for these items now lives in MDyX's own code instead. The shortcuts themselves still work; only the in-menu hint text is gone. They're listed here instead:
+
+| Action | Shortcut |
+|---|---|
+| New Tab | `Ctrl/Cmd+N` |
+| Open | `Ctrl/Cmd+O` |
+| Save | `Ctrl/Cmd+S` |
+| Save As | `Ctrl/Cmd+Shift+S` |
+| Exit | `Ctrl/Cmd+Q` |
+| Undo / Redo | `Ctrl/Cmd+Z` / `Ctrl/Cmd+Y` |
+| Find / Replace | `Ctrl/Cmd+F` / `Ctrl/Cmd+H` |
+| Bold / Italic / Strikethrough / Inline Code | `Ctrl/Cmd+B` / `Ctrl/Cmd+E` / `Ctrl/Cmd+Shift+X` / `Ctrl/Cmd+Alt+M` |
+| Heading 1–6 | `Ctrl/Cmd+Alt+1` – `6` |
+| Bullet / Ordered List / Blockquote / Code Block | `Ctrl/Cmd+Shift+8` / `Ctrl/Cmd+Shift+7` / `Ctrl/Cmd+Shift+9` / `Ctrl/Cmd+Alt+C` |
+| Horizontal Rule | `Ctrl/Cmd+Alt+H` |
+| Insert Table / Image / PlantUML / Mermaid / Link | `Ctrl/Cmd+Alt+T` / `Ctrl/Cmd+Shift+I` / `Ctrl/Cmd+Alt+U` / `Ctrl/Cmd+Alt+E` / `Ctrl/Cmd+K` |
+| Zoom In / Out / Reset | `Ctrl/Cmd+=` / `Ctrl/Cmd+-` / `Ctrl/Cmd+0` (see [Zoom](#zoom)'s known limitation) |
+
+- **Known limitation (Windows, reported by a user)**: several of these shortcuts (e.g. `Ctrl+Q`, `Ctrl+Alt+T`) previously didn't work at all on Windows, even though the same menu item worked fine by clicking — WebView2 owns keyboard focus and Tauri's native menu shortcut mechanism never saw the keypress. This has been fixed by moving those shortcuts to MDyX's own key handling (the same mechanism the rest of the table above already used); if you still see one that doesn't work, please report it.
+
 ### Export
 
 - **Export > Export to HTML...**: saves the current document as a single, self-contained HTML file (styling and math fonts embedded; images are referenced by an absolute path, not embedded).

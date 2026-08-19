@@ -1,5 +1,6 @@
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { editorViewCtx } from "@milkdown/core";
 import type { EditorView } from "@milkdown/prose/view";
 
@@ -8,7 +9,15 @@ import { setupEditorContextMenu } from "./editor/context-menu";
 import { TabManager } from "./tabs/tab-manager";
 import { titleForTab } from "./tabs/tab-state";
 import { setupTabBar } from "./tabs/tab-bar";
-import { setupToolbar, runInsertTable, runUndo, runRedo, runSelectAll } from "./toolbar/tool-bar";
+import {
+  setupToolbar,
+  runInsertTable,
+  runUndo,
+  runRedo,
+  runSelectAll,
+  matchesShortcut,
+  type ToolbarShortcut,
+} from "./toolbar/tool-bar";
 import { showFindBar, showReplaceBar, dismissFindBarOnTabSwitch } from "./editor/find-replace-bar";
 import { insertImageFromClipboardOrDialog } from "./clipboard/insert-image-dialog";
 import { insertPlantumlNodeFromClipboard } from "./editor/nodes/plantuml";
@@ -94,22 +103,41 @@ window.addEventListener("DOMContentLoaded", async () => {
   // fine (no risk of firing before this listener exists).
   await listen<string>("open-file-path", (event) => void tabManager.openPath(event.payload));
 
-  await listen("menu-file-new-tab", () => tabManager.createTab());
-  await listen("menu-file-open", () => void tabManager.openFile());
-  await listen("menu-file-save", () => void tabManager.save());
-  await listen("menu-file-save-as", () => void tabManager.saveAs());
+  // These have no native menu `accelerator` (`lib.rs`, 01_requirements.md
+  // 3.17節, 02_design.md 27章): on Windows, WebView2 owns keyboard focus and
+  // key presses never reach `muda`'s native accelerator table, so a menu
+  // item bound only that way is click-only there. Each function below is
+  // the single implementation for its action; it's called both from the
+  // menu's click event (via `listen` below) and from the `keydown` table
+  // further down, so there's exactly one place doing the work either way.
+  const runNewTab = () => tabManager.createTab();
+  const runOpen = () => void tabManager.openFile();
+  const runSave = () => void tabManager.save();
+  const runSaveAs = () => void tabManager.saveAs();
+  // Mirrors `lib.rs`'s `file-exit` handler: goes through the same
+  // `CloseRequested` interception as the window's own close button, instead
+  // of exiting directly, so this also confirms unsaved tabs (02_design.md
+  // 12.6節).
+  const runExit = () => void getCurrentWindow().close();
+  const runFind = () => crepe.editor.action((ctx) => showFindBar(ctx));
+  const runReplace = () => crepe.editor.action((ctx) => showReplaceBar(ctx));
+  const runInsertImage = () =>
+    crepe.editor.action((ctx) => void insertImageFromClipboardOrDialog(ctx, () => activeFilePath));
+
+  await listen("menu-file-new-tab", runNewTab);
+  await listen("menu-file-open", runOpen);
+  await listen("menu-file-save", runSave);
+  await listen("menu-file-save-as", runSaveAs);
   await listen("menu-edit-undo", () => runUndo(crepe));
   await listen("menu-edit-redo", () => runRedo(crepe));
-  await listen("menu-edit-find", () => crepe.editor.action((ctx) => showFindBar(ctx)));
-  await listen("menu-edit-replace", () => crepe.editor.action((ctx) => showReplaceBar(ctx)));
+  await listen("menu-edit-find", runFind);
+  await listen("menu-edit-replace", runReplace);
   await listen("menu-edit-select-all", () => runSelectAll(crepe));
   await listen("menu-view-zoom-in", () => zoomIn());
   await listen("menu-view-zoom-out", () => zoomOut());
   await listen("menu-view-zoom-reset", () => resetZoom());
   await listen("menu-insert-table", () => runInsertTable(crepe));
-  await listen("menu-insert-image", () =>
-    crepe.editor.action((ctx) => void insertImageFromClipboardOrDialog(ctx, () => activeFilePath))
-  );
+  await listen("menu-insert-image", runInsertImage);
   await listen("menu-insert-plantuml", () =>
     crepe.editor.action((ctx) => void insertPlantumlNodeFromClipboard(ctx.get(editorViewCtx)))
   );
@@ -127,6 +155,25 @@ window.addEventListener("DOMContentLoaded", async () => {
   );
   await listen("menu-settings-plantuml-server", () => void openSettingsPanel());
   await listen("menu-settings-theme", () => void openSettingsPanel());
+
+  const APP_SHORTCUTS: { shortcut: ToolbarShortcut; action: () => void }[] = [
+    { shortcut: { code: "KeyN", ctrl: true }, action: runNewTab },
+    { shortcut: { code: "KeyO", ctrl: true }, action: runOpen },
+    { shortcut: { code: "KeyS", ctrl: true }, action: runSave },
+    { shortcut: { code: "KeyS", ctrl: true, shift: true }, action: runSaveAs },
+    { shortcut: { code: "KeyQ", ctrl: true }, action: runExit },
+    { shortcut: { code: "KeyF", ctrl: true }, action: runFind },
+    { shortcut: { code: "KeyH", ctrl: true }, action: runReplace },
+    { shortcut: { code: "KeyI", ctrl: true, shift: true }, action: runInsertImage },
+  ];
+  window.addEventListener("keydown", (event) => {
+    for (const { shortcut, action } of APP_SHORTCUTS) {
+      if (!matchesShortcut(event, shortcut)) continue;
+      event.preventDefault();
+      action();
+      return;
+    }
+  });
 
   // Export's HTML <title> and temp-file name (html-export.ts) both want a
   // plain "document name", not a full path — reuses the tab bar's own
