@@ -627,6 +627,12 @@ math-field::part(menu-toggle) {
   width: auto;
 }
 
+.insert-image-input-row .settings-input:disabled,
+.insert-image-input-row button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .insert-image-input-row button {
   padding: 6px 10px;
   border: 1px solid #999999;

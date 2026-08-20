@@ -87,11 +87,18 @@ export async function openSettingsPanel(): Promise<void> {
   });
   customCssRow.appendChild(browseCssButton);
 
-  function updateCustomCssVisibility(): void {
-    customCssRow.hidden = themeSelect.value !== CUSTOM_THEME_VALUE;
+  // Kept visible (not `hidden`) even when Theme isn't "Custom...": a saved
+  // customCssPath survives switching to a built-in theme (save_theme's own
+  // doc comment, config.rs), and hiding the row entirely gave no hint that
+  // path was still there but inactive — confusing (01_requirements.md
+  // 10.3節, 02_design.md 18.6節).
+  function updateCustomCssEnabled(): void {
+    const enabled = themeSelect.value === CUSTOM_THEME_VALUE;
+    customCssInput.disabled = !enabled;
+    browseCssButton.disabled = !enabled;
   }
-  themeSelect.addEventListener("change", updateCustomCssVisibility);
-  updateCustomCssVisibility();
+  themeSelect.addEventListener("change", updateCustomCssEnabled);
+  updateCustomCssEnabled();
 
   const buttons = document.createElement("div");
   buttons.className = "settings-buttons";
