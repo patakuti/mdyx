@@ -29,7 +29,6 @@ import { getConfig, saveZoomLevel } from "./settings/config";
 import { applyEditorTheme } from "./theme/theme-style";
 import { showToast } from "./ui/toast";
 import { setupZoom, zoomIn, zoomOut, resetZoom, getZoomLevel } from "./editor/zoom";
-import { runHeadingGlyphDiagnostic } from "./debug/heading-glyph-diagnostics";
 
 window.addEventListener("DOMContentLoaded", async () => {
   const editorRoot = document.querySelector<HTMLDivElement>("#editor-root");
@@ -166,14 +165,6 @@ window.addEventListener("DOMContentLoaded", async () => {
     { shortcut: { code: "KeyF", ctrl: true }, action: runFind },
     { shortcut: { code: "KeyH", ctrl: true }, action: runReplace },
     { shortcut: { code: "KeyI", ctrl: true, shift: true }, action: runInsertImage },
-    // TEMPORARY, for investigating #43 — see debug/heading-glyph-diagnostics.ts.
-    {
-      shortcut: { code: "KeyD", ctrl: true, alt: true, shift: true },
-      action: () =>
-        runHeadingGlyphDiagnostic(editorRoot, () =>
-          showToast('No heading made of only digits found (e.g. "0123456789") — type one first.', "error")
-        ),
-    },
   ];
   window.addEventListener("keydown", (event) => {
     for (const { shortcut, action } of APP_SHORTCUTS) {
