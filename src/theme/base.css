@@ -51,6 +51,27 @@ body {
   max-width: 100%;
 }
 
+/* #43: Crepe's own heading font (--crepe-font-title, imported by
+   editor/setup.ts) defaults to Georgia, whose digits are old-style
+   (proportional, variable baseline) figures by design — legible mixed with
+   lowercase body text, but visibly uneven in a digit-only heading like
+   "#0123456789" (real-machine measurement on Windows: per-character widths
+   varied while line-box top/height did not, matching old-style figures
+   rather than a layout bug). Forcing lining figures fixes the numerals
+   without discarding the heading font itself. Lives here rather than in a
+   theme file so it reaches both the live editor and Export's static HTML
+   (both carry the `.mdyx-content` class) regardless of which theme is
+   active, unless a theme explicitly overrides it for its own heading font. */
+.mdyx-content h1,
+.mdyx-content h2,
+.mdyx-content h3,
+.mdyx-content h4,
+.mdyx-content h5,
+.mdyx-content h6 {
+  font-variant-numeric: lining-nums;
+  font-feature-settings: "lnum" 1;
+}
+
 .mdyx-content .plantuml-node,
 .mdyx-content .mermaid-node {
   text-align: center;
